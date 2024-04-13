@@ -72,8 +72,8 @@ public class Worker : BackgroundService
                     // call lambda (Action<>)
                     _schedules[key](stoppingToken);
 
-                    // sleep 1min 100 ms
-                    await Task.Delay(60 * 1000 + 100, stoppingToken);
+                    // sleep 1s, 100 ms
+                    await Task.Delay(1100, stoppingToken);
                     // re-calculate next ocurrence
                     utcNow = DateTime.UtcNow;
                     next = key.GetNextOccurrence(utcNow)

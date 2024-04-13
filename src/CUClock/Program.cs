@@ -1,5 +1,8 @@
+using System.Globalization;
 using CUClock;
-
+var esMX = new CultureInfo("es-MX");
+CultureInfo.CurrentCulture = esMX;
+CultureInfo.CurrentUICulture = esMX;
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {

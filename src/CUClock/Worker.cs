@@ -12,12 +12,12 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly Dictionary<CronExpression, Action<CancellationToken>> _schedules;
 
-    // Available on Windows only
-    // Initialize a new instance of the SpeechSynthesizer.
-
+    // Available on Windows only    
     private readonly SpeechSynthesizer _synth = new();
     private readonly SoundPlayer _cucu = new(
         "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
+    private readonly SoundPlayer _cucaracha = new(
+        "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
 
     public Worker(ILogger<Worker> logger)
     {
@@ -40,33 +40,49 @@ public class Worker : BackgroundService
         };
 
         // Configure the audio output.
+        _synth.SelectVoice("Microsoft Sabina Desktop");
+        _synth.Rate = -1;
+
         _synth.SetOutputToDefaultAudioDevice();
         // Set a value for the speaking rate.
-        _synth.Rate = -2;
+
+#if DEBUG
+        foreach (var item in _synth.GetInstalledVoices())
+        {
+            _logger.LogInformation("{culture} - {voice}",
+                item.VoiceInfo.Culture.ToString(),
+                item.VoiceInfo.Name);
+        }
+#endif
+
     }
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Now(stoppingToken);
+        var tasks = new List<Task>();
         foreach (var key in _schedules.Keys)
         {
             var utcNow = DateTime.UtcNow;
             var next = key.GetNextOccurrence(utcNow)
                 ?? throw new ApplicationException(
                     "Next Ocurrence was NULL, verify ScheduleFormat.");
-            var timeToNext = next - utcNow;
-            _ = Task.Run(async () =>
+            var timeToNext = (next - utcNow)
+                .Add(TimeSpan.FromMilliseconds(100));
+            tasks.Add(Task.Run(async () =>
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogInformation("Sleeping for {ttn}",
+                    _logger.LogInformation("{cron} - Sleeping for {ttn}",
+                        key.ToString(),
                         timeToNext.Humanize(3,
                             maxUnit: TimeUnit.Day,
                             minUnit: TimeUnit.Second));
 
                     await Task.Delay(timeToNext, stoppingToken);
 
-                    _logger.LogInformation("Waking up at {time}",
+                    _logger.LogInformation("{cron} - Waking up at {time}",
+                        key.ToString(),
                         DateTimeOffset.Now);
 
                     // call lambda (Action<>)
@@ -80,14 +96,16 @@ public class Worker : BackgroundService
                         ?? throw new NullReferenceException();
                     timeToNext = next - utcNow;
                 }
-            }, stoppingToken);
+            }, stoppingToken));
         }
-        await Task.CompletedTask;
+        await Task.WhenAll(tasks);
     }
 
-    private async Task Speak(string text, CancellationToken stoppingToken)
+    private async Task Speak(string text,
+        SoundPlayer? sound,
+        CancellationToken stoppingToken)
     {
-        _cucu.Play();
+        sound?.Play();
         await Task.Delay(3500, stoppingToken);
         // Speak a string.
         _synth.Speak(text);
@@ -99,51 +117,73 @@ public class Worker : BackgroundService
             DateTime.Now.TimeOfDay.Humanize(
                 precision: 3,
                 minUnit: TimeUnit.Second));
-        await Speak(txt, stoppingToken);
+        await Speak(txt, _cucaracha, stoppingToken);
         _logger.LogInformation(txt);
+    }
+
+    private string PrefijoHora(int hora, bool includeArt = true)
+    {
+        if (includeArt)
+        {
+            return hora > 1 ? "Son las" : "Es la";
+        }
+        else
+        {
+            return hora > 1 ? "Son" : "Es";
+        }
+        
     }
 
     private async void EnPunto(CancellationToken stoppingToken)
     {
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+
         var txt = string.Format(
-            "{0} {1} en punto",
-            DateTime.Now.TimeOfDay.Hours < 13
-                ? DateTime.Now.TimeOfDay.Hours
-                : DateTime.Now.TimeOfDay.Hours - 12,
+            "{0} {1} {2}",
+            PrefijoHora(hora), hora,
             DateTime.Now.TimeOfDay.Hours < 13
                 ? "del día"
-                : "de la noche");
-        await Speak(txt, stoppingToken);
+                : DateTime.Now.TimeOfDay.Hours < 19 
+                ? "de la tarde" : "de la noche");
+        await Speak(txt, _cucu, stoppingToken);
+        await Task.Delay(500, stoppingToken);
+        await Speak(string.Format("La{1} {0} en punto", hora, 
+            hora == 1 ? "" : "s"),
+            sound: null, stoppingToken);
         _logger.LogInformation(txt);
     }
 
     private async void CuartoDeHora(CancellationToken stoppingToken)
     {
-        var txt = string.Format("Son las {0} y cuarto",
-            DateTime.Now.TimeOfDay.Hours < 13
-                ? DateTime.Now.TimeOfDay.Hours
-                : DateTime.Now.TimeOfDay.Hours - 12);
-        await Speak(txt, stoppingToken);
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+        var txt = string.Format("{0} {1} y cuarto", PrefijoHora(hora), hora);
+        await Speak(txt, _cucu, stoppingToken);
         _logger.LogInformation(txt);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
     {
-        var txt = string.Format("Son las {0} y media",
-            DateTime.Now.TimeOfDay.Hours < 13
-                ? DateTime.Now.TimeOfDay.Hours
-                : DateTime.Now.TimeOfDay.Hours - 12);
-        await Speak(txt, stoppingToken);
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+        var txt = string.Format("{0} {1} y media", PrefijoHora(hora), hora);
+        await Speak(txt, _cucaracha, stoppingToken);
         _logger.LogInformation(txt);
     }
 
     private async void CuartoPara(CancellationToken stoppingToken)
     {
-        var txt = string.Format("Son cuarto para las {0}",
-            DateTime.Now.TimeOfDay.Hours + 1 < 13
-                ? DateTime.Now.TimeOfDay.Hours + 1
-                : DateTime.Now.TimeOfDay.Hours - 11);
-        await Speak(txt, stoppingToken);
+        var hora = DateTime.Now.TimeOfDay.Hours + 1 < 13
+            ? DateTime.Now.TimeOfDay.Hours + 1
+            : DateTime.Now.TimeOfDay.Hours - 11;
+        var txt = string.Format("{0} cuarto para la{2} {1}",
+            PrefijoHora(hora, false), hora,
+            hora > 1 ? "s" : "");
+        await Speak(txt, _cucu, stoppingToken);
         _logger.LogInformation(txt);
     }
 

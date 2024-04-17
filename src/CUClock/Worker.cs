@@ -59,14 +59,17 @@ public class Worker : BackgroundService
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var t1 = SayCurrentTime(stoppingToken);
-        var tasks = new List<Task>(_schedules.Count);
+        Trace.Assert(_schedules.Count == 4);
+        var tasks = new List<Task>(_schedules.Count + 1)
+        {
+            SayCurrentTime(stoppingToken)
+        };
         foreach (var key in _schedules.Keys)
         {
             tasks.Add(
                 WaitUntilNext(key, stoppingToken));
         }
-        tasks.Insert(0, t1);
+        Trace.Assert(tasks.Count == 5);
         await Task.WhenAll(tasks.ToArray());
     }
 
@@ -101,7 +104,7 @@ public class Worker : BackgroundService
             "{0} {1} {2}",
             PrefijoHora(hora), hora,
             DateTime.Now.TimeOfDay.Hours < 13
-                ? "del día"
+                ? "del dï¿½a"
                 : DateTime.Now.TimeOfDay.Hours < 19
                 ? "de la tarde" : "de la noche");
         await Speak(txt, _cucu, stoppingToken);

@@ -57,6 +57,28 @@ public class Worker : BackgroundService
 #endif
     }
 
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var t1 = SayCurrentTime(stoppingToken);
+        var tasks = new List<Task>(_schedules.Count);
+        foreach (var key in _schedules.Keys)
+        {
+            tasks.Add(
+                WaitUntilNext(key, DateTime.UtcNow, stoppingToken));
+        }
+        tasks.Insert(0, t1);
+        await Task.WhenAll(tasks.ToArray());
+    }
+
+    private async Task SayCurrentTime(CancellationToken stoppingToken)
+    {
+        var txt = string.Format("La hora actual es: {0}",
+            DateTime.Now.TimeOfDay.Humanize(
+                precision: 3,
+                minUnit: TimeUnit.Second));
+        await Speak(txt, _cucaracha, stoppingToken);
+    }
+
     private static string PrefijoHora(int hora, bool includeArt = true)
     {
         if (includeArt)
@@ -67,15 +89,6 @@ public class Worker : BackgroundService
         {
             return hora > 1 ? "Son" : "Es";
         }
-    }
-
-    private async Task SayCurrentTime(CancellationToken stoppingToken)
-    {
-        var txt = string.Format("La hora actual es: {0}",
-            DateTime.Now.TimeOfDay.Humanize(
-                precision: 3,
-                minUnit: TimeUnit.Second));
-        await Speak(txt, _cucaracha, stoppingToken);
     }
 
     private async void EnPunto(CancellationToken stoppingToken)
@@ -127,17 +140,6 @@ public class Worker : BackgroundService
             PrefijoHora(hora, false), hora,
             hora > 1 ? "s" : "");
         await Speak(txt, _cucu, stoppingToken);
-    }
-
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        await SayCurrentTime(stoppingToken);
-        var tasks = new List<Task>();
-        foreach (var key in _schedules.Keys)
-        {
-            tasks.Add(WaitUntilNext(key, DateTime.UtcNow, stoppingToken));
-        }
-        await Task.WhenAll(tasks.ToArray());
     }
 
     private async Task WaitUntilNext(CronExpression cron, DateTime utcNow,

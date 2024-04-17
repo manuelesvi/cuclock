@@ -197,5 +197,14 @@ public class Worker : BackgroundService
         // Speak
         _synth.Speak(text);
     }
+
+    public override void Dispose()
+    {
+        _bells?.Dispose();
+        _cucaracha?.Dispose();
+        _cucu?.Dispose();
+        _synth?.Dispose();
+        base.Dispose();
+    }
 }
 #pragma warning restore CA1416 // Validate platform compatibility

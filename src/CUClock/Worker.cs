@@ -21,6 +21,8 @@ public class Worker : BackgroundService
         "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
     private readonly SoundPlayer _cucaracha = new(
         "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
+    private readonly SoundPlayer _bells = new(
+        "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
     public Worker(ILogger<Worker> logger)
     {
@@ -122,7 +124,7 @@ public class Worker : BackgroundService
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora);
-        await Speak(txt, _cucu, stoppingToken);
+        await Speak(txt, _bells, stoppingToken);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
@@ -143,7 +145,7 @@ public class Worker : BackgroundService
         var txt = string.Format("{0} cuarto para la{2} {1}",
             PrefijoHora(hora, false), hora,
             hora > 1 ? "s" : "");
-        await Speak(txt, _cucu, stoppingToken);
+        await Speak(txt, _bells, stoppingToken);
     }
 
     private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)

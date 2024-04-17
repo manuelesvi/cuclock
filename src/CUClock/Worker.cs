@@ -109,10 +109,10 @@ public class Worker : BackgroundService
                 : DateTime.Now.TimeOfDay.Hours < 19
                 ? "de la tarde" : "de la noche");
         await Speak(txt, _cucu, stoppingToken);
-        await Task.Delay(500, stoppingToken);
+        await Task.Delay(300, stoppingToken);
         await Speak(string.Format("La{1} {0} en punto", hora,
             hora == 1 ? "" : "s"),
-            sound: null, stoppingToken);
+            sound: _cucu, stoppingToken);
     }
 
     private async void CuartoDeHora(CancellationToken stoppingToken)

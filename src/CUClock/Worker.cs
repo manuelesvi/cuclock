@@ -76,15 +76,6 @@ public class Worker : BackgroundService
         await Task.WhenAll(tasks.ToArray());
     }
 
-    private async Task SayCurrentTime(CancellationToken stoppingToken)
-    {
-        var txt = string.Format("La hora actual es: {0}",
-            DateTime.Now.TimeOfDay.Humanize(
-                precision: 3,
-                minUnit: TimeUnit.Second));
-        await Speak(txt, _cucaracha, stoppingToken);
-    }
-
     private static string PrefijoHora(int hora, bool includeArt = true)
     {
         if (includeArt)
@@ -97,55 +88,13 @@ public class Worker : BackgroundService
         }
     }
 
-    private async void EnPunto(CancellationToken stoppingToken)
+    private async Task SayCurrentTime(CancellationToken stoppingToken)
     {
-        var hora = DateTime.Now.TimeOfDay.Hours < 13
-            ? DateTime.Now.TimeOfDay.Hours
-            : DateTime.Now.TimeOfDay.Hours - 12;
-
-        var txt = string.Format(
-            "{0} {1} {2}",
-            PrefijoHora(hora), hora,
-            DateTime.Now.TimeOfDay.Hours < 13
-                ? "del d�a"
-                : DateTime.Now.TimeOfDay.Hours < 19
-                ? "de la tarde" : "de la noche");
-        await Speak(txt, _cucu, stoppingToken);
-        await Task.Delay(300, stoppingToken);
-        await Speak(string.Format("La{1} {0} en punto", hora,
-            hora == 1 ? "" : "s"),
-            sound: _cucu, stoppingToken);
-    }
-
-    private async void CuartoDeHora(CancellationToken stoppingToken)
-    {
-        var hora = DateTime.Now.TimeOfDay.Hours < 13
-            ? DateTime.Now.TimeOfDay.Hours
-            : DateTime.Now.TimeOfDay.Hours - 12;
-        var txt = string.Format("{0} {1} y cuarto",
-            PrefijoHora(hora), hora);
-        await Speak(txt, _bells, stoppingToken);
-    }
-
-    private async void YMedia(CancellationToken stoppingToken)
-    {
-        var hora = DateTime.Now.TimeOfDay.Hours < 13
-            ? DateTime.Now.TimeOfDay.Hours
-            : DateTime.Now.TimeOfDay.Hours - 12;
-        var txt = string.Format("{0} {1} y media",
-            PrefijoHora(hora), hora);
+        var txt = string.Format("La hora actual es: {0}",
+            DateTime.Now.TimeOfDay.Humanize(
+                precision: 3,
+                minUnit: TimeUnit.Second));
         await Speak(txt, _cucaracha, stoppingToken);
-    }
-
-    private async void CuartoPara(CancellationToken stoppingToken)
-    {
-        var hora = DateTime.Now.TimeOfDay.Hours + 1 < 13
-            ? DateTime.Now.TimeOfDay.Hours + 1
-            : DateTime.Now.TimeOfDay.Hours - 11;
-        var txt = string.Format("{0} cuarto para la{2} {1}",
-            PrefijoHora(hora, false), hora,
-            hora > 1 ? "s" : "");
-        await Speak(txt, _bells, stoppingToken);
     }
 
     private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)
@@ -180,17 +129,70 @@ public class Worker : BackgroundService
                 ?? throw new NullReferenceException();
             timeToNext = next - utcNow;
         }
+    }    
+
+    private async void EnPunto(CancellationToken stoppingToken)
+    {
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+
+        var txt = string.Format(
+            "{0} {1} {2}",
+            PrefijoHora(hora), hora,
+            DateTime.Now.TimeOfDay.Hours < 13
+                ? "del d�a"
+                : DateTime.Now.TimeOfDay.Hours < 19
+                ? "de la tarde" : "de la noche");
+        await Speak(txt, _cucu, stoppingToken);
+        await Task.Delay(300, stoppingToken);
+        await Speak(string.Format("La{1} {0} en punto", hora,
+            hora == 1 ? "" : "s"),
+            sound: _cucu, stoppingToken);
     }
 
+    private async void CuartoDeHora(CancellationToken stoppingToken)
+    {
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+        var txt = string.Format("{0} {1} y cuarto",
+            PrefijoHora(hora), hora);
+        await Speak(txt, _bells, stoppingToken, 4500);
+    }
+
+    private async void YMedia(CancellationToken stoppingToken)
+    {
+        var hora = DateTime.Now.TimeOfDay.Hours < 13
+            ? DateTime.Now.TimeOfDay.Hours
+            : DateTime.Now.TimeOfDay.Hours - 12;
+        var txt = string.Format("{0} {1} y media",
+            PrefijoHora(hora), hora);
+        await Speak(txt, _cucaracha, stoppingToken);
+    }
+
+    private async void CuartoPara(CancellationToken stoppingToken)
+    {
+        var hora = DateTime.Now.TimeOfDay.Hours + 1 < 13
+            ? DateTime.Now.TimeOfDay.Hours + 1
+            : DateTime.Now.TimeOfDay.Hours - 11;
+        var txt = string.Format("{0} cuarto para la{2} {1}",
+            PrefijoHora(hora, false), hora,
+            hora > 1 ? "s" : "");
+        await Speak(txt, _bells, stoppingToken, 4500);
+    }    
+
     private async Task Speak(string text,
-        SoundPlayer? sound,
-        CancellationToken stoppingToken)
+        SoundPlayer? sound,        
+        CancellationToken stoppingToken,
+        int pauseTimeMilliseconds = 3500)
     {
         _logger.LogInformation(text);
+        
         sound?.Play();
         if (sound is not null)
         {
-            await Task.Delay(3500, stoppingToken);
+            await Task.Delay(pauseTimeMilliseconds, stoppingToken);
         }
         // Speak
         _synth.Speak(text);

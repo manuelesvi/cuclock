@@ -64,7 +64,7 @@ public class Worker : BackgroundService
         foreach (var key in _schedules.Keys)
         {
             tasks.Add(
-                WaitUntilNext(key, DateTime.UtcNow, stoppingToken));
+                WaitUntilNext(key, stoppingToken));
         }
         tasks.Insert(0, t1);
         await Task.WhenAll(tasks.ToArray());
@@ -142,9 +142,9 @@ public class Worker : BackgroundService
         await Speak(txt, _cucu, stoppingToken);
     }
 
-    private async Task WaitUntilNext(CronExpression cron, DateTime utcNow,
-        CancellationToken stoppingToken)
+    private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)
     {
+        var utcNow = DateTime.UtcNow;
         var next = cron.GetNextOccurrence(utcNow)
                 ?? throw new ApplicationException();
         var timeToNext = next - utcNow;

@@ -9,8 +9,10 @@ namespace CUClock;
 #pragma warning disable CA1416 // Validate platform compatibility
 public class Worker : BackgroundService
 {
+    private delegate void Schedule(CancellationToken cancellationToken);
+
     private readonly ILogger<Worker> _logger;
-    private readonly Dictionary<CronExpression, Action<CancellationToken>> _schedules;
+    private readonly Dictionary<CronExpression, Schedule> _schedules;
 
     // Available on Windows only    
     private readonly SpeechSynthesizer _synth = new();
@@ -22,7 +24,7 @@ public class Worker : BackgroundService
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
-        _schedules = new Dictionary<CronExpression, Action<CancellationToken>>
+        _schedules = new Dictionary<CronExpression, Schedule>
         {
             { CronExpression.Hourly, EnPunto },
             {
@@ -41,12 +43,11 @@ public class Worker : BackgroundService
 
         // Configure the audio output.
         _synth.SelectVoice("Microsoft Sabina Desktop");
-        _synth.Rate = -1;
-
-        _synth.SetOutputToDefaultAudioDevice();
         // Set a value for the speaking rate.
-
+        _synth.Rate = -1;
+        _synth.SetOutputToDefaultAudioDevice();
 #if DEBUG
+        // list all voices as log info
         foreach (var item in _synth.GetInstalledVoices())
         {
             _logger.LogInformation("{culture} - {voice}",
@@ -54,38 +55,37 @@ public class Worker : BackgroundService
                 item.VoiceInfo.Name);
         }
 #endif
-
     }
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Now(stoppingToken);
+        await SayCurrentTime(stoppingToken);
         var tasks = new List<Task>();
         foreach (var key in _schedules.Keys)
         {
             var utcNow = DateTime.UtcNow;
             var next = key.GetNextOccurrence(utcNow)
-                ?? throw new ApplicationException(
-                    "Next Ocurrence was NULL, verify ScheduleFormat.");
-            var timeToNext = (next - utcNow)
-                .Add(TimeSpan.FromMilliseconds(100));
+                ?? throw new ApplicationException();
+            var timeToNext = next - utcNow;
             tasks.Add(Task.Run(async () =>
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogInformation("{cron} - Sleeping for {ttn}",
+                    _logger.LogInformation("{now} {cron} - Sleeping for {ttn} until {next}",
+                        DateTimeOffset.Now,
                         key.ToString(),
                         timeToNext.Humanize(3,
                             maxUnit: TimeUnit.Day,
-                            minUnit: TimeUnit.Second));
+                            minUnit: TimeUnit.Second),
+                        next.ToLocalTime().TimeOfDay.ToString());
 
                     await Task.Delay(timeToNext, stoppingToken);
 
-                    _logger.LogInformation("{cron} - Waking up at {time}",
-                        key.ToString(),
-                        DateTimeOffset.Now);
+                    _logger.LogInformation("{now} {cron} - Waking up!!!",
+                        DateTimeOffset.Now,
+                        key.ToString());
 
-                    // call lambda (Action<>)
+                    // call delegate
                     _schedules[key](stoppingToken);
 
                     // sleep 1s, 100 ms
@@ -98,27 +98,30 @@ public class Worker : BackgroundService
                 }
             }, stoppingToken));
         }
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks.ToArray());
     }
 
     private async Task Speak(string text,
         SoundPlayer? sound,
         CancellationToken stoppingToken)
     {
+        _logger.LogInformation(text);
         sound?.Play();
-        await Task.Delay(3500, stoppingToken);
-        // Speak a string.
+        if (sound is not null)
+        { 
+            await Task.Delay(3500, stoppingToken);
+        }
+        // Speak
         _synth.Speak(text);
     }
 
-    private async Task Now(CancellationToken stoppingToken)
+    private async Task SayCurrentTime(CancellationToken stoppingToken)
     {
         var txt = string.Format("La hora actual es: {0}",
             DateTime.Now.TimeOfDay.Humanize(
                 precision: 3,
                 minUnit: TimeUnit.Second));
         await Speak(txt, _cucaracha, stoppingToken);
-        _logger.LogInformation(txt);
     }
 
     private string PrefijoHora(int hora, bool includeArt = true)
@@ -131,7 +134,6 @@ public class Worker : BackgroundService
         {
             return hora > 1 ? "Son" : "Es";
         }
-        
     }
 
     private async void EnPunto(CancellationToken stoppingToken)
@@ -152,7 +154,6 @@ public class Worker : BackgroundService
         await Speak(string.Format("La{1} {0} en punto", hora, 
             hora == 1 ? "" : "s"),
             sound: null, stoppingToken);
-        _logger.LogInformation(txt);
     }
 
     private async void CuartoDeHora(CancellationToken stoppingToken)
@@ -162,7 +163,6 @@ public class Worker : BackgroundService
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto", PrefijoHora(hora), hora);
         await Speak(txt, _cucu, stoppingToken);
-        _logger.LogInformation(txt);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
@@ -172,7 +172,6 @@ public class Worker : BackgroundService
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y media", PrefijoHora(hora), hora);
         await Speak(txt, _cucaracha, stoppingToken);
-        _logger.LogInformation(txt);
     }
 
     private async void CuartoPara(CancellationToken stoppingToken)
@@ -184,8 +183,6 @@ public class Worker : BackgroundService
             PrefijoHora(hora, false), hora,
             hora > 1 ? "s" : "");
         await Speak(txt, _cucu, stoppingToken);
-        _logger.LogInformation(txt);
     }
-
 }
 #pragma warning restore CA1416 // Validate platform compatibility

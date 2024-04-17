@@ -115,8 +115,11 @@ public class Worker : BackgroundService
 
             await Task.Delay(timeToNext, stoppingToken);
 
-            _logger.LogInformation("{now} {cron} - Despertando!!!",
-                DateTime.Now, cron.ToString());
+            _logger.LogInformation("{now} {cron} - Despertando a las {humanized} !!!",
+                DateTime.Now, cron.ToString(),
+                DateTime.Now.TimeOfDay.Humanize(2,
+                    maxUnit: TimeUnit.Hour,
+                    minUnit: TimeUnit.Minute));
 
             // call delegate
             _schedules[cron](stoppingToken);

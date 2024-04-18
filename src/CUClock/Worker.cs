@@ -11,23 +11,27 @@ namespace CUClock;
 public class Worker : BackgroundService
 {
     private delegate void Schedule(CancellationToken cancellationToken);
-
-    private readonly ILogger<Worker> _logger;
-    private readonly Dictionary<CronExpression, Schedule> _schedules;
+    private const int DefaultTimeOut = 35000;
+    private const int BellsTimeOut = 65000;
 
     // Available on Windows only
     private readonly SpeechSynthesizer _synth = new();
-    private readonly SoundPlayer _cucu = new(
-        "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
-    private readonly SoundPlayer _cucaracha = new(
-        "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
-    private readonly SoundPlayer _bells = new(
-        "C:\\Users\\manchax\\Downloads\\1-154919.wav");
+    private readonly SoundPlayer
+        _cucu = new(
+            "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
+    private readonly SoundPlayer
+        _cucaracha = new(
+            "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
+    private readonly SoundPlayer
+        _bells = new(
+            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
+
+    private readonly ILogger<Worker> _logger;
 
     public Worker(ILogger<Worker> logger)
     {
         _logger = logger;
-        _schedules = new Dictionary<CronExpression, Schedule>
+        Schedules = new Dictionary<CronExpression, Schedule>
         {
             { CronExpression.Hourly, EnPunto },
             {
@@ -60,14 +64,23 @@ public class Worker : BackgroundService
 #endif
     }
 
+    /// <summary>
+    /// Holds <see cref="Schedule"/> instances
+    /// scheduled to run at 0, 15, 30 & 45 minutes every hour.
+    /// </summary>
+    private Dictionary<CronExpression, Schedule> Schedules
+    {
+        get;
+    }
+
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Trace.Assert(_schedules.Count == 4);
-        var tasks = new List<Task>(_schedules.Count + 1)
+        Trace.Assert(Schedules.Count == 4);
+        var tasks = new List<Task>(Schedules.Count + 1)
         {
             SayCurrentTime(stoppingToken)
         };
-        foreach (var key in _schedules.Keys)
+        foreach (var key in Schedules.Keys)
         {
             tasks.Add(
                 WaitUntilNext(key, stoppingToken));
@@ -94,7 +107,7 @@ public class Worker : BackgroundService
             DateTime.Now.TimeOfDay.Humanize(
                 precision: 3,
                 minUnit: TimeUnit.Second));
-        await Speak(txt, _cucaracha, stoppingToken);
+        await Announce(txt, _cucaracha, stoppingToken);
     }
 
     private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)
@@ -122,7 +135,7 @@ public class Worker : BackgroundService
                     minUnit: TimeUnit.Minute));
 
             // call delegate
-            _schedules[cron](stoppingToken);
+            Schedules[cron](stoppingToken);
 
             // sleep 1s, 100 ms
             await Task.Delay(1100, stoppingToken);
@@ -132,7 +145,7 @@ public class Worker : BackgroundService
                 ?? throw new NullReferenceException();
             timeToNext = next - utcNow;
         }
-    }    
+    }
 
     private async void EnPunto(CancellationToken stoppingToken)
     {
@@ -143,13 +156,22 @@ public class Worker : BackgroundService
         var txt = string.Format(
             "{0} {1} {2}",
             PrefijoHora(hora), hora,
-            DateTime.Now.TimeOfDay.Hours < 13
-                ? "del d�a"
+            DateTime.Now.TimeOfDay.Hours > 0 &&
+            DateTime.Now.TimeOfDay.Hours < 4
+                ? "de la madrugada"
+                : DateTime.Now.TimeOfDay.Hours < 11
+                ? "de la mañana"
+                : DateTime.Now.TimeOfDay.Hours < 12
+                ? "del día"
+                : DateTime.Now.TimeOfDay.Hours == 12
+                ? "del medio día"
                 : DateTime.Now.TimeOfDay.Hours < 19
-                ? "de la tarde" : "de la noche");
-        await Speak(txt, _cucu, stoppingToken);
-        await Task.Delay(300, stoppingToken);
-        await Speak(string.Format("La{1} {0} en punto", hora,
+                ? "de la tarde"
+                : "de la noche");
+
+        await Announce(txt, _cucu, stoppingToken);
+        await Task.Delay(250, stoppingToken);
+        await Announce(string.Format("La{1} {0} en punto", hora,
             hora == 1 ? "" : "s"),
             sound: _cucu, stoppingToken);
     }
@@ -161,7 +183,7 @@ public class Worker : BackgroundService
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora);
-        await Speak(txt, _bells, stoppingToken, 4500);
+        await Announce(txt, _bells, stoppingToken, BellsTimeOut);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
@@ -171,7 +193,7 @@ public class Worker : BackgroundService
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y media",
             PrefijoHora(hora), hora);
-        await Speak(txt, _cucaracha, stoppingToken);
+        await Announce(txt, _cucaracha, stoppingToken);
     }
 
     private async void CuartoPara(CancellationToken stoppingToken)
@@ -182,16 +204,16 @@ public class Worker : BackgroundService
         var txt = string.Format("{0} cuarto para la{2} {1}",
             PrefijoHora(hora, false), hora,
             hora > 1 ? "s" : "");
-        await Speak(txt, _bells, stoppingToken, 4500);
-    }    
+        await Announce(txt, _bells, stoppingToken, BellsTimeOut);
+    }
 
-    private async Task Speak(string text,
-        SoundPlayer? sound,        
+    private async Task Announce(string text,
+        SoundPlayer? sound,
         CancellationToken stoppingToken,
-        int pauseTimeMilliseconds = 3500)
+        int pauseTimeMilliseconds = DefaultTimeOut)
     {
         _logger.LogInformation(text);
-        
+
         sound?.Play();
         if (sound is not null)
         {

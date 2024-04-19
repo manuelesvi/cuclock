@@ -101,7 +101,7 @@ public class Worker : BackgroundService
     {
         var utcNow = DateTime.UtcNow;
         var next = cron.GetNextOccurrence(utcNow)
-                ?? throw new ApplicationException();
+                ?? throw new NullReferenceException();
         var timeToNext = next - utcNow;
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -110,7 +110,7 @@ public class Worker : BackgroundService
                 cron.ToString(),
                 timeToNext.Humanize(3,
                     maxUnit: TimeUnit.Day,
-            minUnit: TimeUnit.Second),
+                    minUnit: TimeUnit.Second),
                 next.ToLocalTime().ToString());
 
             await Task.Delay(timeToNext, stoppingToken);
@@ -144,7 +144,7 @@ public class Worker : BackgroundService
             "{0} {1} {2}",
             PrefijoHora(hora), hora,
             DateTime.Now.TimeOfDay.Hours < 13
-                ? "del d�a"
+                ? "del día"
                 : DateTime.Now.TimeOfDay.Hours < 19
                 ? "de la tarde" : "de la noche");
         await Speak(txt, _cucu, stoppingToken);

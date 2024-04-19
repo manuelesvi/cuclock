@@ -48,11 +48,6 @@ public class Worker : BackgroundService
             }
         };
 
-        // Configure the audio output.
-        _synth.SelectVoice("Microsoft Sabina Desktop");
-        // Set a value for the speaking rate.
-        _synth.Rate = -1;
-        _synth.SetOutputToDefaultAudioDevice();
 #if DEBUG
         // list all voices as log info
         foreach (var item in _synth.GetInstalledVoices())
@@ -62,6 +57,11 @@ public class Worker : BackgroundService
                 item.VoiceInfo.Name);
         }
 #endif
+        // Configure the audio output.
+        _synth.SelectVoice("Microsoft Sabina Desktop");
+        // Set a value for the speaking rate.
+        _synth.Rate = -1;
+        _synth.SetOutputToDefaultAudioDevice();
     }
 
     /// <summary>
@@ -233,3 +233,4 @@ public class Worker : BackgroundService
     }
 }
 #pragma warning restore CA1416 // Validate platform compatibility
+ 

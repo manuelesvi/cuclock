@@ -11,7 +11,7 @@ namespace CUClock;
 public class Worker : BackgroundService
 {
     private delegate void Schedule(CancellationToken cancellationToken);
-    private const int DefaultTimeOut = 35000;
+    private const int DefaultTimeOut = 4500;
     private const int BellsTimeOut = 65000;
 
     // Available on Windows only

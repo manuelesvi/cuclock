@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<RootNamespace>CUClock.Windows.Core</RootNamespace>
+		<Platforms>AnyCPU;x64;x86</Platforms>
+		<Platforms>x86;x64;arm64;AnyCPU</Platforms>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Folder Include="Models\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Cronos" Version="0.8.4" />
+		<PackageReference Include="Humanizer" Version="2.14.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+		<PackageReference Include="System.Speech" Version="8.0.0" />
+		<PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+﻿{
+    "profiles": {
+      "CUClock.Windows (Package)": {
+        "commandName": "MsixPackage"
+      },
+      "CUClock.Windows (Unpackaged)": {
+        "commandName": "Project"
+      }
+    }
+}

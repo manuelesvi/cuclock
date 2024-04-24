@@ -1,14 +1,17 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
 using Cronos;
 using Humanizer;
 using Humanizer.Localisation;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace CUClock;
+namespace CUClock.Windows.Core;
 
 #pragma warning disable CA1416 // Validate platform compatibility
-public class Worker : BackgroundService
+public class Announcer : BackgroundService
 {
     private delegate void Schedule(CancellationToken cancellationToken);
     private const int DefaultTimeOut = 4100;
@@ -29,10 +32,13 @@ public class Worker : BackgroundService
         _bells = new(
             "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
-    private readonly ILogger<Worker> _logger;
+    private readonly ILogger<Announcer> _logger;
 
-    public Worker(ILogger<Worker> logger)
+    public Announcer(ILogger<Announcer> logger)
     {
+        var esMX = new CultureInfo("es-MX");
+        CultureInfo.CurrentCulture = esMX;
+        CultureInfo.CurrentUICulture = esMX;
         _logger = logger;
         Schedules = new Dictionary<CronExpression, Schedule>
         {
@@ -125,7 +131,7 @@ public class Worker : BackgroundService
     {
         var utcNow = DateTime.UtcNow;
         var next = cron.GetNextOccurrence(utcNow)
-                ?? throw new NullReferenceException();
+            ?? throw new NullReferenceException();
         var timeToNext = next - utcNow;
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -245,4 +251,3 @@ public class Worker : BackgroundService
     }
 }
 #pragma warning restore CA1416 // Validate platform compatibility
- 

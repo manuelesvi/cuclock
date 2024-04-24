@@ -11,11 +11,14 @@ namespace CUClock;
 public class Worker : BackgroundService
 {
     private delegate void Schedule(CancellationToken cancellationToken);
-    private const int DefaultTimeOut = 4500;
-    private const int BellsTimeOut = 65000;
+    private const int DefaultTimeOut = 4100;
+    private const int BellsTimeOut = 15000; // milliseconds
 
     // Available on Windows only
     private readonly SpeechSynthesizer _synth = new();
+    private readonly List<VoiceInfo> _voices = new();
+    private readonly Random _random = new();
+
     private readonly SoundPlayer
         _cucu = new(
             "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
@@ -48,20 +51,28 @@ public class Worker : BackgroundService
             }
         };
 
-#if DEBUG
         // list all voices as log info
-        foreach (var item in _synth.GetInstalledVoices())
+        foreach (var item in _synth.GetInstalledVoices()
+            .Where(v => v.VoiceInfo.Culture.TwoLetterISOLanguageName == "es"))
         {
+#if DEBUG
             _logger.LogInformation("{culture} - {voice}",
                 item.VoiceInfo.Culture.ToString(),
                 item.VoiceInfo.Name);
-        }
 #endif
-        // Configure the audio output.
-        _synth.SelectVoice("Microsoft Sabina Desktop");
+            _voices.Add(item.VoiceInfo);
+        }
+        
         // Set a value for the speaking rate.
         _synth.Rate = -1;
+        // Configure the audio output.
         _synth.SetOutputToDefaultAudioDevice();
+    }
+
+    private void SelectVoice()
+    {
+        var index = _random.Next(0, _voices.Count);
+        _synth.SelectVoice(_voices[index].Name);
     }
 
     /// <summary>
@@ -219,6 +230,7 @@ public class Worker : BackgroundService
         {
             await Task.Delay(pauseTimeMilliseconds, stoppingToken);
         }
+        SelectVoice();
         // Speak
         _synth.Speak(text);
     }

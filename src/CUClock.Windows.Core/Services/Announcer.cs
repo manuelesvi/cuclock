@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
 using Cronos;
+using CUClock.Windows.Core.Contracts.Services;
 using Humanizer;
 using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Windows.Core;
 
 #pragma warning disable CA1416 // Validate platform compatibility
-public class Announcer : BackgroundService
+public class Announcer : BackgroundService, IAnnouncer
 {
     private delegate void Schedule(CancellationToken cancellationToken);
     private const int DefaultTimeOut = 4100;
@@ -33,12 +34,12 @@ public class Announcer : BackgroundService
             "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
     private readonly ILogger<Announcer> _logger;
+    private readonly CultureInfo _mxCulture = CultureInfo.GetCultureInfo("es-MX");
 
     public Announcer(ILogger<Announcer> logger)
     {
-        var esMX = new CultureInfo("es-MX");
-        CultureInfo.CurrentCulture = esMX;
-        CultureInfo.CurrentUICulture = esMX;
+        CultureInfo.CurrentCulture = _mxCulture;
+        CultureInfo.CurrentUICulture = _mxCulture;
         _logger = logger;
         Schedules = new Dictionary<CronExpression, Schedule>
         {
@@ -68,11 +69,21 @@ public class Announcer : BackgroundService
 #endif
             _voices.Add(item.VoiceInfo);
         }
-        
+
         // Set a value for the speaking rate.
         _synth.Rate = -1;
         // Configure the audio output.
         _synth.SetOutputToDefaultAudioDevice();
+    }
+
+    public void Announce()
+    {
+        _ = Task.Run(async () =>
+        {
+            CultureInfo.CurrentCulture = _mxCulture;
+            CultureInfo.CurrentUICulture = _mxCulture;
+            await SayCurrentTime();
+        });
     }
 
     private void SelectVoice()
@@ -118,12 +129,12 @@ public class Announcer : BackgroundService
         }
     }
 
-    private async Task SayCurrentTime(CancellationToken stoppingToken)
+    private async Task SayCurrentTime(CancellationToken stoppingToken = new())
     {
         var txt = string.Format("La hora actual es: {0}",
             DateTime.Now.TimeOfDay.Humanize(
                 precision: 3,
-                minUnit: TimeUnit.Second));
+                minUnit: TimeUnit.Second, culture: _mxCulture));
         await Announce(txt, _cucaracha, stoppingToken);
     }
 

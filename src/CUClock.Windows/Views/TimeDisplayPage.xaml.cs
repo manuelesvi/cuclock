@@ -1,5 +1,4 @@
 ﻿using CUClock.Windows.ViewModels;
-
 using Microsoft.UI.Xaml.Controls;
 
 namespace CUClock.Windows.Views;

@@ -1,4 +1,5 @@
-﻿using CUClock.Windows.Activation;
+﻿using System.Globalization;
+using CUClock.Windows.Activation;
 using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Core;
 using CUClock.Windows.Core.Contracts.Services;
@@ -50,8 +51,8 @@ public partial class App : Application
 
     public App()
     {
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("es-MX");
         InitializeComponent();
-
         Host = Microsoft.Extensions.Hosting.Host.
         CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)

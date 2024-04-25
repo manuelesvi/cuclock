@@ -3,7 +3,7 @@ ___
 
 ## About
 
-A WinUI application that runs every 0, 15, 30 & 45 minutes every hour to tell the time 
+A WinUI+Console application that runs every 0, 15, 30 & 45 minutes every hour to tell the time 
 in mexican spanish (requires Windows) and shows a toast notification indicating current time.
 
 ## Compile & Run as WinUI desktop application

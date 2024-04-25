@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CUClock.Windows.Contracts.Services;
+using CUClock.Windows.Core.ViewModels;
 using CUClock.Windows.Helpers;
 
 using Microsoft.UI.Xaml;
@@ -13,7 +14,7 @@ using Windows.ApplicationModel;
 
 namespace CUClock.Windows.ViewModels;
 
-public partial class SettingsViewModel : ObservableRecipient
+public partial class SettingsViewModel : BaseViewModel
 {
     private readonly IThemeSelectorService _themeSelectorService;
 

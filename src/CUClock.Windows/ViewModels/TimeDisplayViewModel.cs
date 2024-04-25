@@ -1,8 +1,8 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CUClock.Windows.Core.ViewModels;
 
 namespace CUClock.Windows.ViewModels;
 
-public partial class TimeDisplayViewModel : ObservableRecipient
+public partial class TimeDisplayViewModel : BaseViewModel
 {
     public TimeDisplayViewModel()
     {

@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CUClock.Windows.Contracts.Services;
+using CUClock.Windows.Core.ViewModels;
 using CUClock.Windows.Views;
 
 using Microsoft.UI.Xaml.Navigation;
 
 namespace CUClock.Windows.ViewModels;
 
-public partial class ShellViewModel : ObservableRecipient
+public partial class ShellViewModel : BaseViewModel
 {
     [ObservableProperty]
     private bool isBackEnabled;

@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "cr55NRKE2j/U/ofA4M4gGCDs9BlBiF71xvY0BiOFySAFW/GfZHxlBQ4/qyo23p0n9koZ/kUSki5R5QRvq7qwig==",
+  "dgSpecHash": "0S4uX5ybNRFy09rrhbRR5KM4dLETdP4dBL1+EuxytZIiEsduqYyO5xRK2D5SItRupKANRnoBVmMSBHE2BXL3/Q==",
   "success": true,
   "projectFilePath": "C:\\Users\\manchax\\source\\repos\\cuclock\\src\\CUClock\\CUClock.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\manchax\\.nuget\\packages\\communitytoolkit.mvvm\\8.2.2\\communitytoolkit.mvvm.8.2.2.nupkg.sha512",
     "C:\\Users\\manchax\\.nuget\\packages\\cronos\\0.8.4\\cronos.0.8.4.nupkg.sha512",
     "C:\\Users\\manchax\\.nuget\\packages\\humanizer\\2.14.1\\humanizer.2.14.1.nupkg.sha512",
     "C:\\Users\\manchax\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

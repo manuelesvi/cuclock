@@ -54,7 +54,13 @@ public class Announcer : BackgroundService, IAnnouncer
             "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
     private readonly ILogger<Announcer> _logger;
-    private readonly CultureInfo _mxCulture = CultureInfo.GetCultureInfo("es-MX");
+
+    /// <summary>
+    /// Mexican Spanish
+    /// <see cref="CultureInfo"/>.
+    /// </summary>
+    private readonly CultureInfo _mxCulture 
+        = CultureInfo.GetCultureInfo("es-MX");
 
     public Announcer(ILogger<Announcer> logger)
     {

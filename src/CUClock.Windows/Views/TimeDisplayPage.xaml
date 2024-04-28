@@ -10,8 +10,9 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
+        <ToggleSwitch  />
         <Button x:Uid="TimeDisplayPage_AnnounceBtn" 
                 Grid.Row="1" HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Announce}" />

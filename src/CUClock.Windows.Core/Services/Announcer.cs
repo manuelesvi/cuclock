@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Media;
+using System.Net.NetworkInformation;
 using System.Speech.Synthesis;
 using Cronos;
 using CUClock.Windows.Core.Contracts.Services;
@@ -14,15 +15,34 @@ namespace CUClock.Windows.Core;
 #pragma warning disable CA1416 // Validate platform compatibility
 public class Announcer : BackgroundService, IAnnouncer
 {
+    /// <summary>
+    /// A delegate that encapsulates
+    /// a task programmed to be run in the future.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// Stop or cancels the executing task.
+    /// </param>
     private delegate void Schedule(CancellationToken cancellationToken);
-    private const int DefaultTimeOut = 4100;
+    
+    private const int DefaultTimeOut = 4100; // milliseconds
     private const int BellsTimeOut = 15000; // milliseconds
+    
+    /// <summary>
+    /// Precision for <see cref="SayCurrentTime(CancellationToken)"/>.
+    /// </summary>
+    private const int Precision = 4;
 
-    // Available on Windows only
+    /// <summary>
+    /// TwoLetter ISO code.
+    /// </summary>
+    private const string Spanish = "es";
+
+    // these are Available on Windows only
     private readonly SpeechSynthesizer _synth = new();
     private readonly List<VoiceInfo> _voices = new();
     private readonly Random _random = new();
 
+    // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
         _cucu = new(
             "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
@@ -41,9 +61,15 @@ public class Announcer : BackgroundService, IAnnouncer
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
         _logger = logger;
+        // create dictionary with 4 tasks to be ran at
+        // 0, 15, 30 and 45 minutes with a schedule delegate
+        // using TTS to speak the time in a fashion manner ;>)
         Schedules = new Dictionary<CronExpression, Schedule>
         {
-            { CronExpression.Hourly, EnPunto },
+            {
+                CronExpression.Hourly,
+                EnPunto
+            },
             {
                 CronExpression.Parse("15 * * * SUN-SAT"),
                 CuartoDeHora
@@ -60,14 +86,15 @@ public class Announcer : BackgroundService, IAnnouncer
 
         // list all voices as log info
         foreach (var item in _synth.GetInstalledVoices()
-            .Where(v => v.VoiceInfo.Culture.TwoLetterISOLanguageName == "es"))
+            .Where(v => v.VoiceInfo.Culture
+                .TwoLetterISOLanguageName == Spanish))
         {
+            _voices.Add(item.VoiceInfo);
 #if DEBUG
             _logger.LogInformation("{culture} - {voice}",
                 item.VoiceInfo.Culture.ToString(),
                 item.VoiceInfo.Name);
 #endif
-            _voices.Add(item.VoiceInfo);
         }
 
         // Set a value for the speaking rate.
@@ -86,15 +113,15 @@ public class Announcer : BackgroundService, IAnnouncer
         });
     }
 
-    private void SelectVoice()
-    {
-        var index = _random.Next(0, _voices.Count);
-        _synth.SelectVoice(_voices[index].Name);
-    }
-
+    private void SelectVoice() => _synth.SelectVoice(_voices[
+            _random.Next(0, _voices.Count) // selects a random voice
+    ].Name);
+    
     /// <summary>
-    /// Holds <see cref="Schedule"/> instances
-    /// scheduled to run at 0, 15, 30 & 45 minutes every hour.
+    /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
+    /// that holds
+    /// <see cref="Schedule"/> tasks scheduled
+    /// to execute at 0, 15, 30 & 45 minutes each hour (MON-SUN).
     /// </summary>
     private Dictionary<CronExpression, Schedule> Schedules
     {
@@ -117,6 +144,9 @@ public class Announcer : BackgroundService, IAnnouncer
         await Task.WhenAll(tasks.ToArray());
     }
 
+    private static string PrefijoHora(bool includeArt = true)
+        => PrefijoHora(DateTime.Now.Hour, includeArt);
+
     private static string PrefijoHora(int hora, bool includeArt = true)
     {
         if (includeArt)
@@ -131,12 +161,29 @@ public class Announcer : BackgroundService, IAnnouncer
 
     private async Task SayCurrentTime(CancellationToken stoppingToken = new())
     {
-        var txt = string.Format("La hora actual es: {0}",
+        var txt = string.Format(
+            DateTime.Now.Minute > 30 ? Faltan() : "Es : {0}",
             DateTime.Now.TimeOfDay.Humanize(
-                precision: 3,
-                minUnit: TimeUnit.Second, culture: _mxCulture));
+                precision: Precision,
+                minUnit: TimeUnit.Millisecond,
+                culture: _mxCulture));
+
         await Announce(txt, _cucaracha, stoppingToken);
     }
+
+    private string Faltan()
+    {
+        var txt = string.Format(
+            "Faltan {0} para la{2} {1}",
+            60 - DateTime.Now.Minute,
+            DateTime.Now.Hour + 1 > 12
+                ? 12 - DateTime.Now.Hour
+                : DateTime.Now.Hour,
+            SufijoHora(DateTime.Now.Hour));
+        return txt;
+    }
+
+    private object SufijoHora(int hora) => hora > 1 ? "s" : "";
 
     private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)
     {
@@ -230,7 +277,7 @@ public class Announcer : BackgroundService, IAnnouncer
             ? DateTime.Now.TimeOfDay.Hours + 1
             : DateTime.Now.TimeOfDay.Hours - 11;
         var txt = string.Format("{0} cuarto para la{2} {1}",
-            PrefijoHora(hora, false), hora,
+            PrefijoHora(hora, includeArt: false), hora,
             hora > 1 ? "s" : "");
         await Announce(txt, _bells, stoppingToken, BellsTimeOut);
     }

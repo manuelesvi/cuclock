@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Media;
-using System.Net.NetworkInformation;
 using System.Speech.Synthesis;
 using Cronos;
 using CUClock.Windows.Core.Contracts.Services;
@@ -13,8 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Windows.Core;
 
 #pragma warning disable CA1416 // Validate platform compatibility
-public class Announcer : BackgroundService, IAnnouncer
-{
+public class Announcer : BackgroundService, IAnnouncer {
     /// <summary>
     /// A delegate that encapsulates
     /// a task programmed to be run in the future.
@@ -23,24 +21,30 @@ public class Announcer : BackgroundService, IAnnouncer
     /// Stop or cancels the executing task.
     /// </param>
     private delegate void Schedule(CancellationToken cancellationToken);
-    
+    private readonly Random _random = new();
+
     private const int DefaultTimeOut = 4100; // milliseconds
     private const int BellsTimeOut = 15000; // milliseconds
-    
+
     /// <summary>
-    /// Precision for <see cref="SayCurrentTime(CancellationToken)"/>.
+    /// Precision for hour, minute, second and millisecond.
     /// </summary>
-    private const int Precision = 4;
+    private const int MillisecondPrecision = 4;
+
+    /// <summary>
+    /// Precision for hour, minute and second.
+    /// </summary>
+    private const int SecondPrecision = 3;
 
     /// <summary>
     /// TwoLetter ISO code.
     /// </summary>
     private const string Spanish = "es";
+    private const int HalfPast = 30;
 
     // these are Available on Windows only
     private readonly SpeechSynthesizer _synth = new();
     private readonly List<VoiceInfo> _voices = new();
-    private readonly Random _random = new();
 
     // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
@@ -53,41 +57,26 @@ public class Announcer : BackgroundService, IAnnouncer
         _bells = new(
             "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
-    private readonly ILogger<Announcer> _logger;
-
     /// <summary>
-    /// Mexican Spanish
-    /// <see cref="CultureInfo"/>.
+    /// Mexican spanish <see cref="CultureInfo"/>.
     /// </summary>
-    private readonly CultureInfo _mxCulture 
+    private readonly CultureInfo _mxCulture
         = CultureInfo.GetCultureInfo("es-MX");
+
+    private readonly ILogger<Announcer> _logger;
 
     public Announcer(ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
         _logger = logger;
-        // create dictionary with 4 tasks to be ran at
-        // 0, 15, 30 and 45 minutes with a schedule delegate
-        // using TTS to speak the time in a fashion manner ;>)
+
         Schedules = new Dictionary<CronExpression, Schedule>
         {
-            {
-                CronExpression.Hourly,
-                EnPunto
-            },
-            {
-                CronExpression.Parse("15 * * * SUN-SAT"),
-                CuartoDeHora
-            },
-            {
-                CronExpression.Parse("30 * * * SUN-SAT"),
-                YMedia
-            },
-            {
-                CronExpression.Parse("45 * * * SUN-SAT"),
-                CuartoPara
-            }
+            { CronExpression.Hourly, EnPunto },
+            { CronExpression.Parse("15 * * * SUN-SAT"), CuartoDeHora },
+            { CronExpression.Parse("30 * * * SUN-SAT"), YMedia },
+            { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
 
         // list all voices as log info
@@ -109,20 +98,20 @@ public class Announcer : BackgroundService, IAnnouncer
         _synth.SetOutputToDefaultAudioDevice();
     }
 
-    public void Announce()
+    public void Announce(bool sayMilliseconds = true)
     {
         _ = Task.Run(async () =>
         {
             CultureInfo.CurrentCulture = _mxCulture;
             CultureInfo.CurrentUICulture = _mxCulture;
-            await SayCurrentTime();
+            await SayCurrentTime(sayMilliseconds);
         });
     }
 
     private void SelectVoice() => _synth.SelectVoice(_voices[
             _random.Next(0, _voices.Count) // selects a random voice
     ].Name);
-    
+
     /// <summary>
     /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
     /// that holds
@@ -139,7 +128,7 @@ public class Announcer : BackgroundService, IAnnouncer
         Trace.Assert(Schedules.Count == 4);
         var tasks = new List<Task>(Schedules.Count + 1)
         {
-            SayCurrentTime(stoppingToken)
+            SayCurrentTime(sayMilliseconds: true, stoppingToken)
         };
         foreach (var key in Schedules.Keys)
         {
@@ -165,27 +154,43 @@ public class Announcer : BackgroundService, IAnnouncer
         }
     }
 
-    private async Task SayCurrentTime(CancellationToken stoppingToken = new())
+    private async Task SayCurrentTime(
+        bool sayMilliseconds = true,
+        CancellationToken stoppingToken = new())
     {
-        var txt = string.Format(
-            DateTime.Now.Minute > 30 ? Faltan() : "Es : {0}",
-            DateTime.Now.TimeOfDay.Humanize(
-                precision: Precision,
+        var txt = string.Format(DateTime.Now.Minute > HalfPast
+            ? Faltan() : "Es : {0}",
+            sayMilliseconds ? DateTime.Now.TimeOfDay
+            .Humanize(
                 minUnit: TimeUnit.Millisecond,
-                culture: _mxCulture));
+                culture: _mxCulture,
+                precision: MillisecondPrecision)
+
+            : DateTime.Now.TimeOfDay.Humanize(
+                minUnit: TimeUnit.Second,
+                culture: _mxCulture,
+                precision: SecondPrecision));
 
         await Announce(txt, _cucaracha, stoppingToken);
     }
 
-    private string Faltan()
+    private string Faltan(
+        bool saySecondsAndMilliseconds = false)
     {
+        var currentTime = DateTime.Now;
+        var secondsTxt = saySecondsAndMilliseconds
+            ? string.Format(
+                "{0} {1}", 60 - currentTime.Second,
+                1000 - currentTime.Millisecond)
+            : string.Empty;
         var txt = string.Format(
-            "Faltan {0} para la{2} {1}",
+            "Faltan {3} {0} para la{2} {1}",
             60 - DateTime.Now.Minute,
             DateTime.Now.Hour + 1 > 12
-                ? 12 - DateTime.Now.Hour
-                : DateTime.Now.Hour,
-            SufijoHora(DateTime.Now.Hour));
+                ? 1 + DateTime.Now.Hour - 12
+                : 1 + DateTime.Now.Hour,
+            SufijoHora(DateTime.Now.Hour),
+            secondsTxt);
         return txt;
     }
 
@@ -314,4 +319,5 @@ public class Announcer : BackgroundService, IAnnouncer
         base.Dispose();
     }
 }
-#pragma warning restore CA1416 // Validate platform compatibility
+
+#pragma warning restore CA1416

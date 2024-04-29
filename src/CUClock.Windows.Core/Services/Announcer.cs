@@ -11,14 +11,15 @@ using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
 
-#pragma warning disable CA1416 // Validate platform compatibility
 public class Announcer : BackgroundService,
     IAnnouncer
 {
-    private const int DefaultTimeOut = 4100; // milliseconds
-    private const int BellsTimeOut = 15000; // milliseconds
+    // milliseconds
+    private const int DefaultTimeOut = 4100;
+    private const int BellsTimeOut = 15000;
 
-    private readonly Random _random = new();
+    private readonly Random
+        _random = new(); // some randomness
 
     /// <summary>
     /// A delegate that encapsulates
@@ -27,7 +28,8 @@ public class Announcer : BackgroundService,
     /// <param name="cancellationToken">
     /// Stop or cancels the executing task.
     /// </param>
-    private delegate void Schedule(CancellationToken cancellationToken);
+    private delegate void Schedule(
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Precision for hour, minute and second.
@@ -35,7 +37,8 @@ public class Announcer : BackgroundService,
     private const int SecondPrecision = 3;
 
     /// <summary>
-    /// Precision for hour, minute, second and millisecond.
+    /// Precision for hour, minute, second
+    /// and millisecond.
     /// </summary>
     private const int MillisecondPrecision = 4;
 
@@ -45,30 +48,37 @@ public class Announcer : BackgroundService,
     private const string Spanish = "es";
 
     /// <summary>
-    /// Sets the minute from which the hour will be said
-    /// using remaining minutes for the next hour.
+    /// Half an hour.
     /// </summary>
-    private const int HalfPast = 30;
+    private const int HalfHour = 30;
+    
+    private const int FourTasks = 4;
+    private const int FiveTasks = 5;
 
-    // (Windows only)
+    /// <summary>
+    /// (Windows only)
+    /// </summary>
+#pragma warning disable CA1416 // skip platform compatibility
     private readonly SpeechSynthesizer _synth = new();
 
     /// <summary>
-    /// A collection of installed voices in 
+    /// A <see cref="List{VoiceInfo}"/> of installed voices in 
     /// <see cref="Spanish">.
     /// </summary>
     private readonly List<VoiceInfo> _voices = new();
+
+    private readonly SoundPlayer
+        _bells = new(
+            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
     // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
         _cucu = new(
             "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
+    
     private readonly SoundPlayer
         _cucaracha = new(
             "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
-    private readonly SoundPlayer
-        _bells = new(
-            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -145,42 +155,43 @@ public class Announcer : BackgroundService,
         get;
     }
 
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(
+        CancellationToken stoppingToken)
     {
-        Trace.Assert(Schedules.Count == 4);
+        Trace.Assert(Schedules.Count == FourTasks);
         var tasks = new List<Task>(Schedules.Count + 1)
         {
-            SayCurrentTime(sayMilliseconds: true, stoppingToken)
+            SayCurrentTime(
+                sayMilliseconds: true,
+                stoppingToken)
         };
+
         foreach (var key in Schedules.Keys)
         {
             tasks.Add(
                 WaitUntilNext(key, stoppingToken));
         }
-        Trace.Assert(tasks.Count == 5);
+
+        Trace.Assert(tasks.Count == FiveTasks,
+            string.Format("The task count wasn't {0}",
+            FiveTasks));
+
         await Task.WhenAll(tasks.ToArray());
     }
 
     private static string PrefijoHora(bool includeArt = true)
         => PrefijoHora(DateTime.Now.Hour, includeArt);
 
-    private static string PrefijoHora(int hora, bool includeArt = true)
-    {
-        if (includeArt)
-        {
-            return hora > 1 ? "Son las" : "Es la";
-        }
-        else
-        {
-            return hora > 1 ? "Son" : "Es";
-        }
-    }
+    private static string PrefijoHora(int hora,
+        bool includeArt = true) => includeArt ? hora > 1 
+        ? "Son las" : "Es la"
+        : hora > 1 ? "Son" : "Es";
 
     private async Task SayCurrentTime(
         bool sayMilliseconds = true,
         CancellationToken stoppingToken = new())
     {
-        var txt = string.Format(DateTime.Now.Minute > HalfPast
+        var txt = string.Format(DateTime.Now.Minute > HalfHour
             ? Faltan() : "Es : {0}",
             sayMilliseconds ? DateTime.Now.TimeOfDay
             .Humanize(
@@ -216,9 +227,11 @@ public class Announcer : BackgroundService,
         return txt;
     }
 
-    private object SufijoHora(int hora) => hora > 1 ? "s" : "";
+    private static object SufijoHora(int hora) =>
+        hora > 1 ? "s" : "";
 
-    private async Task WaitUntilNext(CronExpression cron, CancellationToken stoppingToken)
+    private async Task WaitUntilNext(CronExpression cron,
+        CancellationToken stoppingToken)
     {
         var utcNow = DateTime.UtcNow;
         var next = cron.GetNextOccurrence(utcNow)
@@ -284,7 +297,7 @@ public class Announcer : BackgroundService,
             sound: _cucu, stoppingToken);
     }
 
-    private async void CuartoDeHora(CancellationToken stoppingToken)
+     private async void CuartoDeHora(CancellationToken stoppingToken)
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -320,16 +333,15 @@ public class Announcer : BackgroundService,
         CancellationToken stoppingToken,
         int pauseTimeMilliseconds = DefaultTimeOut)
     {
-        _logger.LogInformation(text);
-
-        sound?.Play();
         if (sound is not null)
         {
-            await Task.Delay(pauseTimeMilliseconds, stoppingToken);
+            sound.Play();
+            await Task.Delay(pauseTimeMilliseconds,
+                stoppingToken);
         }
         SelectVoice();
-        // Speak
         _synth.Speak(text);
+        _logger.LogInformation(text);
     }
 
     public override void Dispose()
@@ -341,5 +353,4 @@ public class Announcer : BackgroundService,
         base.Dispose();
     }
 }
-
 #pragma warning restore CA1416

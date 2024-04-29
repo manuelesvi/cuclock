@@ -12,7 +12,14 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Windows.Core;
 
 #pragma warning disable CA1416 // Validate platform compatibility
-public class Announcer : BackgroundService, IAnnouncer {
+public class Announcer : BackgroundService,
+    IAnnouncer
+{
+    private const int DefaultTimeOut = 4100; // milliseconds
+    private const int BellsTimeOut = 15000; // milliseconds
+
+    private readonly Random _random = new();
+
     /// <summary>
     /// A delegate that encapsulates
     /// a task programmed to be run in the future.
@@ -21,15 +28,6 @@ public class Announcer : BackgroundService, IAnnouncer {
     /// Stop or cancels the executing task.
     /// </param>
     private delegate void Schedule(CancellationToken cancellationToken);
-    private readonly Random _random = new();
-
-    private const int DefaultTimeOut = 4100; // milliseconds
-    private const int BellsTimeOut = 15000; // milliseconds
-
-    /// <summary>
-    /// Precision for hour, minute, second and millisecond.
-    /// </summary>
-    private const int MillisecondPrecision = 4;
 
     /// <summary>
     /// Precision for hour, minute and second.
@@ -37,13 +35,28 @@ public class Announcer : BackgroundService, IAnnouncer {
     private const int SecondPrecision = 3;
 
     /// <summary>
+    /// Precision for hour, minute, second and millisecond.
+    /// </summary>
+    private const int MillisecondPrecision = 4;
+
+    /// <summary>
     /// TwoLetter ISO code.
     /// </summary>
     private const string Spanish = "es";
+
+    /// <summary>
+    /// Sets the minute from which the hour will be said
+    /// using remaining minutes for the next hour.
+    /// </summary>
     private const int HalfPast = 30;
 
-    // these are Available on Windows only
+    // (Windows only)
     private readonly SpeechSynthesizer _synth = new();
+
+    /// <summary>
+    /// A collection of installed voices in 
+    /// <see cref="Spanish">.
+    /// </summary>
     private readonly List<VoiceInfo> _voices = new();
 
     // TODO: move wav files and include 'em as resources
@@ -69,7 +82,6 @@ public class Announcer : BackgroundService, IAnnouncer {
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
-        _logger = logger;
 
         Schedules = new Dictionary<CronExpression, Schedule>
         {
@@ -79,24 +91,34 @@ public class Announcer : BackgroundService, IAnnouncer {
             { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
 
-        // list all voices as log info
-        foreach (var item in _synth.GetInstalledVoices()
-            .Where(v => v.VoiceInfo.Culture
-                .TwoLetterISOLanguageName == Spanish))
+        var t1 = Task.Run(() =>
         {
-            _voices.Add(item.VoiceInfo);
+            // Sets a value for the speaking rate
+            _synth.Rate = -1;
+            // Configures audio output
+            _synth.SetOutputToDefaultAudioDevice();
+        });
+        var t2 = Task.Run(() =>
+        {
+            // list all voices as log info
+            foreach (var item in _synth.GetInstalledVoices()
+                .Where(v => v.VoiceInfo.Culture
+                    .TwoLetterISOLanguageName == Spanish))
+            {
+                _voices.Add(item.VoiceInfo);
 #if DEBUG
-            _logger.LogInformation("{culture} - {voice}",
-                item.VoiceInfo.Culture.ToString(),
-                item.VoiceInfo.Name);
+                _logger.LogInformation("{culture} - {voice}",
+                    item.VoiceInfo.Culture.ToString(),
+                    item.VoiceInfo.Name);
 #endif
-        }
+            } // for each
+        });
 
-        // Set a value for the speaking rate.
-        _synth.Rate = -1;
-        // Configure the audio output.
-        _synth.SetOutputToDefaultAudioDevice();
-    }
+        _logger = logger;
+
+        Task.Run(async () =>
+            await Task.WhenAll(t1, t2));
+    } // Announcer .ctor
 
     public void Announce(bool sayMilliseconds = true)
     {

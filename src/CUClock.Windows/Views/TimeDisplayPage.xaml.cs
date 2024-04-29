@@ -9,15 +9,21 @@ public sealed partial class TimeDisplayPage : Page
     public TimeDisplayPage()
     {
         ViewModel = App.GetService<TimeDisplayViewModel>();
-        InitializeComponent();
 
-        //System.Diagnostics.Debug.WriteLine(
-        //    Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride);
-        System.Diagnostics.Debug.WriteLine("TimeDisplayPage_AnnounceBtn/Content".GetLocalized());
+        InitializeComponent();
+        // ... testing localized resources
+        System.Diagnostics.Debug.WriteLine(
+            "TimeDisplayPage_AnnounceBtn/Content".GetLocalized());
+
     }
 
     public TimeDisplayViewModel ViewModel
     {
         get;
+    }
+
+    private void ToggleSwitch_Toggled(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ViewModel.MillisecondSwitch = msToggle.IsOn;
     }
 }

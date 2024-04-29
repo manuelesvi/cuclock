@@ -12,7 +12,12 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <ToggleSwitch  />
+        <ToggleSwitch
+            x:Name="msToggle"
+            Toggled="ToggleSwitch_Toggled"
+            OffContent="Sin milisegundos"
+            OnContent="Con milisegundos"
+            IsOn="True" />
         <Button x:Uid="TimeDisplayPage_AnnounceBtn" 
                 Grid.Row="1" HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Announce}" />

@@ -4,9 +4,11 @@
 
 This project contains these components: 
 
-- [Announcer](http://charandax/gitlab/mespinosa/cuclock/-/blob/ad8bf5ec509fca091670f89507f195662314c191/src/CUClock.Windows.Core/Services/Announcer.cs)
-- (the rest are part of template used to generate boilerplate code) 
-   :wheel:
+- [Announcer](http://charandax/gitlab/mespinosa/cuclock/-/blob/dev/src/CUClock.Windows.Core/Services/Announcer.cs?ref_type=heads)
+- (the rest is boilerplate code) 
+
+:wheel:
 
 ---
+
 [Markdown Guide](https://www.markdownguide.org)

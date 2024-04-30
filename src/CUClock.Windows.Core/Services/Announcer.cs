@@ -10,37 +10,48 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
-
+/// <summary>
+/// Consumes underlying OS TextToSpeech synthesis
+/// (currently supported on Windows only)
+/// to SAY the current time at specific intervals
+/// or at will using
+/// <see cref="IAnnouncer.Announce(bool)"/> method.
+/// </summary>
+/// <remarks>
+/// 
+/// Intervals are defined using CRON expressions:
+/// 
+///                                         Allowed values    Allowed special characters Comment
+///  ┌───────────── second(optional)        0-59              * , - /
+///  │ ┌───────────── minute                0-59              * , - /
+///  │ │ ┌───────────── hour                0-23              * , - /
+///  │ │ │ ┌───────────── day of month      1-31              * , - / L W ?
+///  │ │ │ │ ┌───────────── month           1-12 or JAN-DEC   * , - /
+///  │ │ │ │ │ ┌───────────── day of week   0-6  or SUN-SAT   * , - / # L ?              Both 0 and 7 means SUN
+///  │ │ │ │ │ │
+///  * * * * * *
+///  </remarks>
+///  <example>
+///  0 15 6-18 * * MON-SAT (daily every hour at 15 minutes monday until saturday)
+///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
+///  </example>
 public class Announcer : BackgroundService,
     IAnnouncer
 {
     // milliseconds
-    private const int DefaultTimeOut = 4100;
-    private const int BellsTimeOut = 15000;
-
-    private readonly Random
-        _random = new(); // some randomness
-
-    /// <summary>
-    /// A delegate that encapsulates
-    /// a task programmed to be run in the future.
-    /// </summary>
-    /// <param name="cancellationToken">
-    /// Stop or cancels the executing task.
-    /// </param>
-    private delegate void Schedule(
-        CancellationToken cancellationToken);
+    private const int Default_Length = 41 * 100;
+    private const int Bells_Length   = 15 * 1000;
 
     /// <summary>
     /// Precision for hour, minute and second.
     /// </summary>
-    private const int SecondPrecision = 3;
+    private const int Precision_Second = 3;
 
     /// <summary>
     /// Precision for hour, minute, second
     /// and millisecond.
     /// </summary>
-    private const int MillisecondPrecision = 4;
+    private const int Precision_Millisecond = 4;
 
     /// <summary>
     /// TwoLetter ISO code.
@@ -55,7 +66,34 @@ public class Announcer : BackgroundService,
     private const int FourTasks = 4;
     private const int FiveTasks = 5;
 
+    private readonly Random
+        _random = new(); // some randomness
+
+    /// <summary>
+    /// Defines a speak task
+    /// programmed to execute in the future.
+    /// They are defined for each quarter of an hour
+    /// and are repeated until next hour.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// Stop or cancels the executing task.
+    /// </param>
+    private delegate void Schedule(
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Mexican spanish <see cref="CultureInfo"/>.
+    /// </summary>
+    private readonly CultureInfo _mxCulture
+        = CultureInfo.GetCultureInfo("es-MX");
+
+    /// <summary>
+    /// Logging.
+    /// </summary>
+    private readonly ILogger<Announcer> _logger;
+
 #pragma warning disable CA1416 // skip platform compatibility
+    
     // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
         _bells = new(
@@ -70,7 +108,7 @@ public class Announcer : BackgroundService,
             "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
 
     /// <summary>
-    /// (Windows only)
+    /// TTS synth (Windows only).
     /// </summary>
     private readonly SpeechSynthesizer _synth = new();
 
@@ -79,14 +117,6 @@ public class Announcer : BackgroundService,
     /// <see cref="Spanish">.
     /// </summary>
     private readonly List<VoiceInfo> _voices = new();
-
-    /// <summary>
-    /// Mexican spanish <see cref="CultureInfo"/>.
-    /// </summary>
-    private readonly CultureInfo _mxCulture
-        = CultureInfo.GetCultureInfo("es-MX");
-
-    private readonly ILogger<Announcer> _logger;
 
     /// <summary>
     /// Main constructor
@@ -198,12 +228,12 @@ public class Announcer : BackgroundService,
             .Humanize(
                 minUnit: TimeUnit.Millisecond,
                 culture: _mxCulture,
-                precision: MillisecondPrecision)
+                precision: Precision_Millisecond)
 
             : DateTime.Now.TimeOfDay.Humanize(
                 minUnit: TimeUnit.Second,
                 culture: _mxCulture,
-                precision: SecondPrecision));
+                precision: Precision_Second));
 
         await Announce(txt, _cucaracha, stoppingToken);
     }
@@ -302,7 +332,7 @@ public class Announcer : BackgroundService,
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora);
-        await Announce(txt, _bells, stoppingToken, BellsTimeOut);
+        await Announce(txt, _bells, stoppingToken, Bells_Length);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
@@ -323,13 +353,13 @@ public class Announcer : BackgroundService,
         var txt = string.Format("{0} cuarto para la{2} {1}",
             PrefijoHora(hora, includeArt: false), hora,
             hora > 1 ? "s" : "");
-        await Announce(txt, _bells, stoppingToken, BellsTimeOut);
+        await Announce(txt, _bells, stoppingToken, Bells_Length);
     }
 
     private async Task Announce(string text,
         SoundPlayer? sound,
         CancellationToken stoppingToken,
-        int pauseTimeMilliseconds = DefaultTimeOut)
+        int pauseTimeMilliseconds = Default_Length)
     {
         if (sound is not null)
         {

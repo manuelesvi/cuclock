@@ -85,7 +85,7 @@ public class Announcer : BackgroundService,
     /// Defines a speaking task
     /// programmed to execute in the future.
     /// They are defined for each quarter of an hour
-    /// and are repeated until next hour.
+    /// and repeated until next hour.
     /// </summary>
     /// <param name="cancellationToken">
     /// Stop or cancels the executing task.

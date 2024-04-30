@@ -196,7 +196,7 @@ public class Announcer : BackgroundService,
         });
     }
 
-    private static string PrefijoHora(int hora, bool includeArt = true) => includeArt
+    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
         ? hora > 1
             ? "Son las"
             : "Es la"
@@ -354,7 +354,7 @@ public class Announcer : BackgroundService,
             ? DateTime.Now.TimeOfDay.Hours
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y media",
-            PrefijoHora(hora), hora);
+            PrefijoHora(hora, conArticulo: false), hora);
         await Announce(txt, _cucaracha, stoppingToken);
     }
 
@@ -364,7 +364,7 @@ public class Announcer : BackgroundService,
             ? DateTime.Now.TimeOfDay.Hours + 1
             : DateTime.Now.TimeOfDay.Hours - 11;
         var txt = string.Format("{0} cuarto para la{2} {1}",
-            PrefijoHora(hora, includeArt: false), hora,
+            PrefijoHora(hora, conArticulo: false), hora,
             hora > 1 ? "s" : "");
         await Announce(txt, _bells, stoppingToken, Bells_Length);
     }

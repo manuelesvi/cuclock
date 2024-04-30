@@ -82,7 +82,7 @@ public class Announcer : BackgroundService,
         _random = new(); // some randomness
 
     /// <summary>
-    /// Defines a speak task
+    /// Defines a speaking task
     /// programmed to execute in the future.
     /// They are defined for each quarter of an hour
     /// and are repeated until next hour.
@@ -173,7 +173,7 @@ public class Announcer : BackgroundService,
 
         _ = Task.Run(async () =>
             await Task.WhenAll(setupTTS, readVoices));
-    } // Announcer .ctor
+    } // Announcer .ctor()
 
     /// <summary>
     /// A read-only <see cref="Dictionary2{TKey, TValue}"/>

@@ -18,8 +18,8 @@ namespace CUClock.Windows.Core;
 /// or at will using
 /// <see cref="IAnnouncer.Announce(bool)"/> method.
 /// </summary>
-/// <remarks>
 /// 
+/// <remarks>
 /// Intervals are defined using CRON expressions:
 /// 
 ///                                         Allowed values    Allowed special characters Comment
@@ -32,6 +32,7 @@ namespace CUClock.Windows.Core;
 ///  │ │ │ │ │ │
 ///  * * * * * *
 ///  </remarks>
+///  
 ///  <example>
 ///  0 15 6-18 * * MON-SAT (daily every hour at 15 minutes monday until saturday)
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
@@ -105,7 +106,6 @@ public class Announcer : BackgroundService,
     private readonly ILogger<Announcer> _logger;
 
 #pragma warning disable CA1416 // skip platform compatibility
-    
     // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
         _bells = new(

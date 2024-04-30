@@ -9,6 +9,4 @@ A `dotnet` class library with:
 
 ---
 
-[Markdown Guide](https://www.markdownguide.org)
-
-*Recommended Markdown Viewer: [Markdown Editor](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2)*
+[Markdown Guide](https://www.markdownguide.org) (*recommended viewer: [Markdown Editor](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2)*).

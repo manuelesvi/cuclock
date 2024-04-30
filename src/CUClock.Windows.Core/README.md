@@ -2,4 +2,11 @@
 
 ## Getting Started
 
-The Core project contains code that can be [reused across multiple application projects](https://docs.microsoft.com/dotnet/standard/net-standard#net-5-and-net-standard).
+This project contains these components: 
+
+- [Announcer](http://charandax/gitlab/mespinosa/cuclock/-/blob/ad8bf5ec509fca091670f89507f195662314c191/src/CUClock.Windows.Core/Services/Announcer.cs)
+- (the rest are part of template used to generate boilerplate code) 
+   :wheel:
+
+---
+[Markdown Guide](https://www.markdownguide.org)

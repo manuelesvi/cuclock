@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
+
 /// <summary>
 /// Consumes underlying OS TextToSpeech synthesis
 /// (currently supported on Windows only)
@@ -63,7 +64,18 @@ public class Announcer : BackgroundService,
     /// </summary>
     private const int HalfHour = 30;
 
+    /// <summary>
+    /// Expected amount of <see cref="Task"/>s
+    /// at the beginning of
+    /// <see cref="ExecuteAsync(CancellationToken)"/>.
+    /// </summary>
     private const int FourTasks = 4;
+
+    /// <summary>
+    /// Expected amount of <see cref="Task"/>s
+    /// at the end of
+    /// <see cref="ExecuteAsync(CancellationToken)"/>.
+    /// </summary>
     private const int FiveTasks = 5;
 
     private readonly Random
@@ -197,8 +209,11 @@ public class Announcer : BackgroundService,
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Trace.Assert(Schedules.Count == FourTasks);
-        var tasks = new List<Task>(Schedules.Count + 1)
+        Trace.Assert(Schedules.Count == FourTasks,
+            $"Invalid count, expected {FourTasks}");
+
+        var tasks = new List<Task>(
+            Schedules.Count + 1) // each quarter + present
         {
             SayCurrentTime(
                 sayMilliseconds: true,
@@ -212,10 +227,8 @@ public class Announcer : BackgroundService,
         }
 
         Trace.Assert(tasks.Count == FiveTasks,
-            string.Format("The task count wasn't {0}",
-            FiveTasks));
-
-        await Task.WhenAll(tasks.ToArray());
+            $"Invalid count, expected {FiveTasks}");
+        await Task.WhenAll(tasks.ToArray()); // done
     }
 
     private async Task SayCurrentTime(

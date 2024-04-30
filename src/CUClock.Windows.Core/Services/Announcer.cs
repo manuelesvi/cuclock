@@ -51,7 +51,7 @@ public class Announcer : BackgroundService,
     /// Half an hour.
     /// </summary>
     private const int HalfHour = 30;
-    
+
     private const int FourTasks = 4;
     private const int FiveTasks = 5;
 
@@ -154,11 +154,11 @@ public class Announcer : BackgroundService,
         });
     }
 
-    private static string PrefijoHora(int hora, bool includeArt = true) => includeArt 
+    private static string PrefijoHora(int hora, bool includeArt = true) => includeArt
         ? hora > 1
             ? "Son las"
             : "Es la"
-        : hora > 1 
+        : hora > 1
             ? "Son"
             : "Es";
 

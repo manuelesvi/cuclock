@@ -55,10 +55,23 @@ public class Announcer : BackgroundService,
     private const int FourTasks = 4;
     private const int FiveTasks = 5;
 
+#pragma warning disable CA1416 // skip platform compatibility
+    // TODO: move wav files and include 'em as resources
+    private readonly SoundPlayer
+        _bells = new(
+            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
+
+    private readonly SoundPlayer
+        _cucu = new(
+            "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
+
+    private readonly SoundPlayer
+        _cucaracha = new(
+            "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
+
     /// <summary>
     /// (Windows only)
     /// </summary>
-#pragma warning disable CA1416 // skip platform compatibility
     private readonly SpeechSynthesizer _synth = new();
 
     /// <summary>
@@ -66,19 +79,6 @@ public class Announcer : BackgroundService,
     /// <see cref="Spanish">.
     /// </summary>
     private readonly List<VoiceInfo> _voices = new();
-
-    private readonly SoundPlayer
-        _bells = new(
-            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
-
-    // TODO: move wav files and include 'em as resources
-    private readonly SoundPlayer
-        _cucu = new(
-            "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
-    
-    private readonly SoundPlayer
-        _cucaracha = new(
-            "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -88,11 +88,15 @@ public class Announcer : BackgroundService,
 
     private readonly ILogger<Announcer> _logger;
 
+    /// <summary>
+    /// Main constructor
+    /// </summary>
+    /// <param name="logger"></param>
     public Announcer(ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
-
+        _logger = logger;
         Schedules = new Dictionary<CronExpression, Schedule>
         {
             { CronExpression.Hourly, EnPunto },
@@ -101,14 +105,15 @@ public class Announcer : BackgroundService,
             { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
 
-        var t1 = Task.Run(() =>
+        var setupTTS = Task.Run(() =>
         {
             // Sets a value for the speaking rate
             _synth.Rate = -1;
             // Configures audio output
             _synth.SetOutputToDefaultAudioDevice();
         });
-        var t2 = Task.Run(() =>
+
+        var readVoices = Task.Run(() =>
         {
             // list all voices as log info
             foreach (var item in _synth.GetInstalledVoices()
@@ -124,25 +129,9 @@ public class Announcer : BackgroundService,
             } // for each
         });
 
-        _logger = logger;
-
-        Task.Run(async () =>
-            await Task.WhenAll(t1, t2));
-    } // Announcer .ctor
-
-    public void Announce(bool sayMilliseconds = true)
-    {
         _ = Task.Run(async () =>
-        {
-            CultureInfo.CurrentCulture = _mxCulture;
-            CultureInfo.CurrentUICulture = _mxCulture;
-            await SayCurrentTime(sayMilliseconds);
-        });
-    }
-
-    private void SelectVoice() => _synth.SelectVoice(_voices[
-            _random.Next(0, _voices.Count) // selects a random voice
-    ].Name);
+            await Task.WhenAll(setupTTS, readVoices));
+    } // Announcer .ctor
 
     /// <summary>
     /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
@@ -155,8 +144,28 @@ public class Announcer : BackgroundService,
         get;
     }
 
-    protected async override Task ExecuteAsync(
-        CancellationToken stoppingToken)
+    public void Announce(bool sayMilliseconds = true)
+    {
+        _ = Task.Run(async () =>
+        {
+            CultureInfo.CurrentCulture = _mxCulture;
+            CultureInfo.CurrentUICulture = _mxCulture;
+            await SayCurrentTime(sayMilliseconds);
+        });
+    }
+
+    private static string PrefijoHora(int hora, bool includeArt = true) => includeArt 
+        ? hora > 1
+            ? "Son las"
+            : "Es la"
+        : hora > 1 
+            ? "Son"
+            : "Es";
+
+    private static object SufijoHora(int hora) =>
+        hora > 1 ? "s" : "";
+
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Trace.Assert(Schedules.Count == FourTasks);
         var tasks = new List<Task>(Schedules.Count + 1)
@@ -179,14 +188,6 @@ public class Announcer : BackgroundService,
         await Task.WhenAll(tasks.ToArray());
     }
 
-    private static string PrefijoHora(bool includeArt = true)
-        => PrefijoHora(DateTime.Now.Hour, includeArt);
-
-    private static string PrefijoHora(int hora,
-        bool includeArt = true) => includeArt ? hora > 1 
-        ? "Son las" : "Es la"
-        : hora > 1 ? "Son" : "Es";
-
     private async Task SayCurrentTime(
         bool sayMilliseconds = true,
         CancellationToken stoppingToken = new())
@@ -207,7 +208,7 @@ public class Announcer : BackgroundService,
         await Announce(txt, _cucaracha, stoppingToken);
     }
 
-    private string Faltan(
+    private static string Faltan(
         bool saySecondsAndMilliseconds = false)
     {
         var currentTime = DateTime.Now;
@@ -226,9 +227,6 @@ public class Announcer : BackgroundService,
             secondsTxt);
         return txt;
     }
-
-    private static object SufijoHora(int hora) =>
-        hora > 1 ? "s" : "";
 
     private async Task WaitUntilNext(CronExpression cron,
         CancellationToken stoppingToken)
@@ -297,7 +295,7 @@ public class Announcer : BackgroundService,
             sound: _cucu, stoppingToken);
     }
 
-     private async void CuartoDeHora(CancellationToken stoppingToken)
+    private async void CuartoDeHora(CancellationToken stoppingToken)
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -344,6 +342,11 @@ public class Announcer : BackgroundService,
         _logger.LogInformation(text);
     }
 
+    private void SelectVoice() => _synth.SelectVoice(_voices[
+            _random.Next(0, _voices.Count) // selects a random voice
+    ].Name);
+#pragma warning restore CA1416
+
     public override void Dispose()
     {
         _bells?.Dispose();
@@ -353,4 +356,3 @@ public class Announcer : BackgroundService,
         base.Dispose();
     }
 }
-#pragma warning restore CA1416

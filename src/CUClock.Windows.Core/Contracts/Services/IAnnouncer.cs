@@ -9,7 +9,7 @@ public interface IAnnouncer : IDisposable
     /// Announces the current time.
     /// </summary>
     /// <param name="sayMilliseconds">
-    /// Includes milliseconds in announcement.
+    /// Say milliseconds in the announcement.
     /// </param>
     public void Announce(bool sayMilliseconds = true);
 }

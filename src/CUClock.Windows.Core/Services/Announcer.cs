@@ -243,7 +243,7 @@ public class Announcer : BackgroundService,
             CancellationToken stoppingToken = new())
     {
         var txt = string.Format(DateTime.Now.Minute > HalfHour
-            ? Faltan() : "Es : {0}",
+            ? Faltan(sayMilliseconds) : "Es : {0}",
             sayMilliseconds ? DateTime.Now.TimeOfDay
             .Humanize(
                 minUnit: TimeUnit.Millisecond,

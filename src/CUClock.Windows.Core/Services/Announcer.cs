@@ -263,18 +263,20 @@ public class Announcer : BackgroundService,
     {
         var currentTime = DateTime.Now;
         var secondsTxt = saySecondsAndMilliseconds
-            ? string.Format(
-                "{0} {1}", 60 - currentTime.Second,
+            ? string.Format("{1} milisegundos {0} segundos",
+                60 - currentTime.Second,
                 1000 - currentTime.Millisecond)
             : string.Empty;
+        
+        var horaSig = DateTime.Now.Hour + 1 > 12
+            ? 1 + DateTime.Now.Hour - 12
+            : 1 + DateTime.Now.Hour;
+
         var txt = string.Format(
             "Faltan {3} {0} para la{2} {1}",
             60 - DateTime.Now.Minute,
-            DateTime.Now.Hour + 1 > 12
-                ? 1 + DateTime.Now.Hour - 12
-                : 1 + DateTime.Now.Hour,
-            SufijoHora(DateTime.Now.Hour),
-            secondsTxt);
+            horaSig, SufijoHora(horaSig), secondsTxt);
+
         return txt;
     }
 

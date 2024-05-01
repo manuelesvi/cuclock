@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Media;
+using System.Resources;
 using System.Speech.Synthesis;
 using Cronos;
 using CUClock.Windows.Core.Contracts.Services;
@@ -12,16 +13,14 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Windows.Core;
 
 /// <summary>
-/// Consumes underlying OS TextToSpeech synthesis
-/// (currently supported on Windows only)
-/// to SAY the current time at specific intervals
-/// or at will using
+/// Announces current local time at specific intervals
+/// when executed as a <see cref="BackgroundService"/>,
+/// or at will calling 
 /// <see cref="IAnnouncer.Announce(bool)"/> method.
 /// </summary>
-/// 
 /// <remarks>
 /// Intervals are defined using CRON expressions:
-/// 
+///
 ///                                         Allowed values    Allowed special characters Comment
 ///  ┌───────────── second(optional)        0-59              * , - /
 ///  │ ┌───────────── minute                0-59              * , - /
@@ -32,7 +31,7 @@ namespace CUClock.Windows.Core;
 ///  │ │ │ │ │ │
 ///  * * * * * *
 ///  </remarks>
-///  
+///
 ///  <example>
 ///  0 15 6-18 * * MON-SAT (daily every hour at 15 minutes monday until saturday)
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
@@ -108,16 +107,9 @@ public class Announcer : BackgroundService,
 #pragma warning disable CA1416 // skip platform compatibility
     // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
-        _bells = new(
-            "C:\\Users\\manchax\\Downloads\\1-154919.wav");
-
-    private readonly SoundPlayer
-        _cucu = new(
-            "C:\\Users\\manchax\\Downloads\\CUCKOOO.WAV");
-
-    private readonly SoundPlayer
-        _cucaracha = new(
-            "C:\\Users\\manchax\\Downloads\\Voicy_La Cucaracha Horn.wav");
+        _bells,
+        _cucu,
+        _cucaracha;
 
     /// <summary>
     /// TTS synth (Windows only).
@@ -139,6 +131,20 @@ public class Announcer : BackgroundService,
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
         _logger = logger;
+
+        var entry = System.Reflection.Assembly.GetEntryAssembly()
+            .Location;
+
+        var dir = Path.GetDirectoryName(entry);
+        var wavs = Path.Combine(dir, "WAVs");
+
+        _bells = new SoundPlayer(wavs + "\\1-154919.wav");
+        _cucu = new SoundPlayer(wavs + "\\CUCKOOO.WAV");
+        _cucaracha = new SoundPlayer(wavs + "\\Voicy_La Cucaracha Horn.wav");
+
+        Trace.Assert(Directory.Exists(dir)
+            && Directory.Exists(wavs), "dir not found");
+
         Schedules = new Dictionary<CronExpression, Schedule>
         {
             { CronExpression.Hourly, EnPunto },
@@ -207,7 +213,8 @@ public class Announcer : BackgroundService,
     private static object SufijoHora(int hora) =>
         hora > 1 ? "s" : "";
 
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override
+        Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Trace.Assert(Schedules.Count == FourTasks,
             $"Invalid count, expected {FourTasks}");
@@ -231,9 +238,9 @@ public class Announcer : BackgroundService,
         await Task.WhenAll(tasks.ToArray()); // done
     }
 
-    private async Task SayCurrentTime(
-        bool sayMilliseconds = true,
-        CancellationToken stoppingToken = new())
+    private async
+        Task SayCurrentTime(bool sayMilliseconds = true,
+            CancellationToken stoppingToken = new())
     {
         var txt = string.Format(DateTime.Now.Minute > HalfHour
             ? Faltan() : "Es : {0}",

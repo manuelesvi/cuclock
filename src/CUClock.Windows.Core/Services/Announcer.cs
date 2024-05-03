@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Media;
-using System.Resources;
 using System.Speech.Synthesis;
 using Cronos;
 using CUClock.Windows.Core.Contracts.Services;
@@ -140,7 +139,8 @@ public class Announcer : BackgroundService,
 
         _bells = new SoundPlayer(wavs + "\\1-154919.wav");
         _cucu = new SoundPlayer(wavs + "\\CUCKOOO.WAV");
-        _cucaracha = new SoundPlayer(wavs + "\\Voicy_La Cucaracha Horn.wav");
+        _cucaracha = new SoundPlayer(wavs
+            + "\\Voicy_La Cucaracha Horn.wav");
 
         Trace.Assert(Directory.Exists(dir)
             && Directory.Exists(wavs), "dir not found");
@@ -202,7 +202,8 @@ public class Announcer : BackgroundService,
         });
     }
 
-    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
+    private static string PrefijoHora(int hora,
+        bool conArticulo = true) => conArticulo
         ? hora > 1
             ? "Son las"
             : "Es la"
@@ -292,9 +293,9 @@ public class Announcer : BackgroundService,
         var timeToNext = next - utcNow;
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("{now} {cron} - Durmiendo por {ttn} hasta {next}",
-                DateTime.Now,
-                cron.ToString(),
+            _logger.LogInformation(
+                "{now} {cron} - Durmiendo por {ttn} hasta {next}",
+                DateTime.Now, cron.ToString(),
                 timeToNext.Humanize(3,
                     maxUnit: TimeUnit.Day,
                     minUnit: TimeUnit.Second),
@@ -302,7 +303,8 @@ public class Announcer : BackgroundService,
 
             await Task.Delay(timeToNext, stoppingToken);
 
-            _logger.LogInformation("{now} {cron} - Despertando a las {humanized} !!!",
+            _logger.LogInformation(
+                "{now} {cron} - Despertando a las {humanized} !!!",
                 DateTime.Now, cron.ToString(),
                 DateTime.Now.TimeOfDay.Humanize(2,
                     maxUnit: TimeUnit.Hour,
@@ -400,7 +402,6 @@ public class Announcer : BackgroundService,
     private void SelectVoice() => _synth.SelectVoice(_voices[
             _random.Next(0, _voices.Count) // selects a random voice
     ].Name);
-#pragma warning restore CA1416
 
     public override void Dispose()
     {
@@ -408,6 +409,7 @@ public class Announcer : BackgroundService,
         _cucaracha?.Dispose();
         _cucu?.Dispose();
         _synth?.Dispose();
+#pragma warning restore CA1416
         base.Dispose();
     }
 }

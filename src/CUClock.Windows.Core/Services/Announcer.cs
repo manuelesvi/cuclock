@@ -35,10 +35,9 @@ namespace CUClock.Windows.Core;
 ///  0 15 6-18 * * MON-SAT (daily every hour at 15 minutes monday until saturday)
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
 ///  </example>
-public class Announcer : BackgroundService,
-    IAnnouncer
+public class Announcer : BackgroundService, IAnnouncer
 {
-    // milliseconds
+    // 41 & 150 seconds
     private const int Default_Length = 41 * 100;
     private const int Bells_Length   = 15 * 1000;
 
@@ -264,7 +263,7 @@ public class Announcer : BackgroundService,
     {
         var currentTime = DateTime.Now;
         var secondsTxt = saySecondsAndMilliseconds
-            ? string.Format("{1} milisegundos, {0} segundos y",
+            ? string.Format("{1} milisegundos, {0} segundos y, ",
                 60 - currentTime.Second,
                 1000 - currentTime.Millisecond)
             : string.Empty;

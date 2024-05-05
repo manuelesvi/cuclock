@@ -14,7 +14,6 @@ public sealed partial class TimeDisplayPage : Page
         // ... testing localized resources
         System.Diagnostics.Debug.WriteLine(
             "TimeDisplayPage_AnnounceBtn/Content".GetLocalized());
-
     }
 
     public TimeDisplayViewModel ViewModel

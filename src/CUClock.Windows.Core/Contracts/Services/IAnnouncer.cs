@@ -12,4 +12,9 @@ public interface IAnnouncer : IDisposable
     /// Say milliseconds in the announcement.
     /// </param>
     public void Announce(bool sayMilliseconds = true);
+
+    /// <summary>
+    /// Silences audio output.
+    /// </summary>
+    public void Silence();
 }

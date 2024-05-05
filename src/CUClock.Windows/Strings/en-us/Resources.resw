@@ -170,4 +170,7 @@
   <data name="TimeDisplayPage_AnnounceBtn.Content" xml:space="preserve">
     <value>Announce</value>
   </data>
+  <data name="TimeDisplayPage_SilenceBtn.Content" xml:space="preserve">
+    <value>Silence</value>
+  </data>
 </root>

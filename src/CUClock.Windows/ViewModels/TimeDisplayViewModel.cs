@@ -25,12 +25,26 @@ public partial class TimeDisplayViewModel : BaseViewModel
                 sayMilliseconds: MillisecondSwitch);
             await Task.CompletedTask;
         });
+
+        Silence = new AsyncRelayCommand(async () =>
+        {
+            _announcer.Silence();
+            await Task.CompletedTask;
+        });
     }
 
     /// <summary>
     /// Announce command.
     /// </summary>
     public IAsyncRelayCommand Announce
+    {
+        get;
+    }
+
+    /// <summary>
+    /// Silence command.
+    /// </summary>
+    public IAsyncRelayCommand Silence
     {
         get;
     }

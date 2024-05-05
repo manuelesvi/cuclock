@@ -6,20 +6,31 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="ContentArea" Padding="0,0,0,20">
+    <Grid x:Name="ContentArea" Padding="0,0,0,20"
+          ColumnSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50*" />
+            <ColumnDefinition Width="50*" />
+        </Grid.ColumnDefinitions>
+        
         <ToggleSwitch
             x:Name="msToggle"
             Toggled="ToggleSwitch_Toggled"
             OffContent="Sin milisegundos"
             OnContent="Con milisegundos"
             IsOn="True" />
-        <Button x:Uid="TimeDisplayPage_AnnounceBtn" 
-                Grid.Row="1" HorizontalAlignment="Stretch"
+        
+        <Button x:Uid="TimeDisplayPage_AnnounceBtn"
+                Grid.Row="1" Grid.Column="0"
+                HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Announce}" />
+        <Button x:Uid="TimeDisplayPage_SilenceBtn"
+                Grid.Row="1" Grid.Column="1"
+                HorizontalAlignment="Stretch"
+                Command="{x:Bind ViewModel.Silence}" />
     </Grid>
 </Page>

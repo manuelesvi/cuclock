@@ -120,6 +120,8 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private readonly List<VoiceInfo> _voices = new();
 
+    private CancellationTokenSource _silence;
+
     /// <summary>
     /// Main constructor
     /// </summary>
@@ -197,8 +199,15 @@ public class Announcer : BackgroundService, IAnnouncer
         {
             CultureInfo.CurrentCulture = _mxCulture;
             CultureInfo.CurrentUICulture = _mxCulture;
-            await SayCurrentTime(sayMilliseconds);
+            _silence = new CancellationTokenSource();
+            await SayCurrentTime(sayMilliseconds, _silence.Token);
         });
+    }
+
+    public void Silence()
+    {
+        _silence?.Cancel();
+        _synth.SpeakAsyncCancelAll();
     }
 
     private static string PrefijoHora(int hora,

@@ -290,9 +290,7 @@ public class Announcer : BackgroundService, IAnnouncer
             "Faltan {3} {0} {4} para la{2} {1}",
             60 - DateTime.Now.Minute,
             horaSig, SufijoHora(horaSig),
-            secondsTxt, saySecondsAndMilliseconds
-                ? "minutos "
-                : string.Empty);
+            secondsTxt, string.Empty);
 
         return txt;
     }

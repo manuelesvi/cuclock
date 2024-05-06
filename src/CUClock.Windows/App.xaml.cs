@@ -14,7 +14,6 @@ using CUClock.Windows.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace CUClock.Windows;
 
@@ -90,7 +89,7 @@ public partial class App : Application
                 services.Configure<LocalSettingsOptions>(context.Configuration.GetSection(
                     nameof(LocalSettingsOptions)));
 
-                services.AddHostedService<Announcer>();
+                // services.AddHostedService<Announcer>();
             }).Build();
 
         App.GetService<IAppNotificationService>().Initialize();
@@ -112,6 +111,6 @@ public partial class App : Application
             AppContext.BaseDirectory));
 
         await App.GetService<IActivationService>().ActivateAsync(args);
-        _ = Host.RunAsync();
+        App.GetService<IAnnouncer>().Announce();
     }
 }

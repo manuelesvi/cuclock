@@ -39,7 +39,7 @@ public class Announcer : BackgroundService, IAnnouncer
 {
     // 41 & 150 seconds
     private const int Default_Length = 41 * 100;
-    private const int Bells_Length   = 15 * 1000;
+    private const int Bells_Length = 15 * 1000;
 
     /// <summary>
     /// Precision for hour, minute and second.
@@ -108,6 +108,8 @@ public class Announcer : BackgroundService, IAnnouncer
         _bells,
         _cucu,
         _cucaracha;
+
+    private SoundPlayer _playing;
 
     /// <summary>
     /// TTS synth (Windows only).
@@ -199,31 +201,23 @@ public class Announcer : BackgroundService, IAnnouncer
         {
             CultureInfo.CurrentCulture = _mxCulture;
             CultureInfo.CurrentUICulture = _mxCulture;
-            _silence = new CancellationTokenSource();
-            await SayCurrentTime(sayMilliseconds, _silence.Token);
+            await SayCurrentTime(sayMilliseconds);
         });
     }
 
     public void Silence()
     {
+        _logger.LogInformation("Silencing... ");
         _silence?.Cancel();
+        _playing?.Stop();
+        _playing?.Dispose();
+        _playing = null;
         _synth.SpeakAsyncCancelAll();
+        _logger.LogInformation("Silenced... ");
     }
 
-    private static string PrefijoHora(int hora,
-        bool conArticulo = true) => conArticulo
-        ? hora > 1
-            ? "Son las"
-            : "Es la"
-        : hora > 1
-            ? "Son"
-            : "Es";
-
-    private static object SufijoHora(int hora) =>
-        hora > 1 ? "s" : "";
-
-    protected async override
-        Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(
+        CancellationToken stoppingToken)
     {
         Trace.Assert(Schedules.Count == FourTasks,
             $"Invalid count, expected {FourTasks}");
@@ -247,24 +241,35 @@ public class Announcer : BackgroundService, IAnnouncer
         await Task.WhenAll(tasks.ToArray()); // done
     }
 
-    private async
-        Task SayCurrentTime(bool sayMilliseconds = true,
-            CancellationToken stoppingToken = new())
+    private static string PrefijoHora(int hora,
+        bool conArticulo = true) => conArticulo
+        ? hora > 1
+            ? "Son las"
+            : "Es la"
+        : hora > 1
+            ? "Son"
+            : "Es";
+
+    private static object SufijoHora(int hora) =>
+        hora > 1 ? "s" : "";
+
+    private async Task SayCurrentTime(bool sayMilliseconds = true,
+        CancellationToken? stoppingToken = null)
     {
+        _silence = new CancellationTokenSource();
         var txt = string.Format(DateTime.Now.Minute > HalfHour
             ? Faltan(sayMilliseconds) : "Es : {0}",
             sayMilliseconds ? DateTime.Now.TimeOfDay
-            .Humanize(
-                minUnit: TimeUnit.Millisecond,
-                culture: _mxCulture,
-                precision: Precision_Millisecond)
-
+                .Humanize(minUnit: TimeUnit.Millisecond,
+                    culture: _mxCulture,
+                    precision: Precision_Millisecond)
             : DateTime.Now.TimeOfDay.Humanize(
                 minUnit: TimeUnit.Second,
                 culture: _mxCulture,
                 precision: Precision_Second));
 
-        await Announce(txt, _cucaracha, stoppingToken);
+        await Announce(txt, _cucaracha,
+            stoppingToken ?? _silence.Token);
     }
 
     private static string Faltan(
@@ -276,7 +281,7 @@ public class Announcer : BackgroundService, IAnnouncer
                 60 - currentTime.Second,
                 1000 - currentTime.Millisecond)
             : string.Empty;
-        
+
         var horaSig = DateTime.Now.Hour + 1 > 12
             ? 1 + DateTime.Now.Hour - 12
             : 1 + DateTime.Now.Hour;
@@ -398,9 +403,9 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         if (sound is not null)
         {
+            _playing = sound;
             sound.Play();
-            await Task.Delay(pauseTimeMilliseconds,
-                stoppingToken);
+            await Task.Delay(pauseTimeMilliseconds, stoppingToken);
         }
         SelectVoice();
         _synth.Speak(text);

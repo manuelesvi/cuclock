@@ -38,8 +38,8 @@ namespace CUClock.Windows.Core;
 public class Announcer : BackgroundService, IAnnouncer
 {
     // 41 & 150 seconds
-    private const int Default_Length = 41 * 100;
-    private const int Bells_Length = 15 * 1000;
+    private const int Default_Length =  41 * 100;
+    private const int Bells_Length   = 150 * 100;
 
     /// <summary>
     /// Precision for hour, minute and second.

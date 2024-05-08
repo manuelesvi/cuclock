@@ -11,6 +11,8 @@ using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
 
+#nullable enable
+
 /// <summary>
 /// Announces current local time at specific intervals
 /// when executed as a <see cref="BackgroundService"/>,
@@ -109,7 +111,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _cucu,
         _cucaracha;
 
-    private SoundPlayer _playing;
+    private SoundPlayer? _playing;
 
     /// <summary>
     /// TTS synth (Windows only).
@@ -122,7 +124,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private readonly List<VoiceInfo> _voices = new();
 
-    private CancellationTokenSource _silence;
+    private CancellationTokenSource? _silence;
 
     /// <summary>
     /// Main constructor
@@ -134,10 +136,10 @@ public class Announcer : BackgroundService, IAnnouncer
         CultureInfo.CurrentUICulture = _mxCulture;
         _logger = logger;
 
-        var entry = System.Reflection.Assembly.GetEntryAssembly()
+        var entry = System.Reflection.Assembly.GetEntryAssembly()!
             .Location;
 
-        var dir = Path.GetDirectoryName(entry);
+        var dir = Path.GetDirectoryName(entry)!;
         var wavs = Path.Combine(dir, "WAVs");
 
         _bells = new SoundPlayer(wavs + "\\1-154919.wav");
@@ -207,13 +209,13 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public void Silence()
     {
-        _logger.LogInformation("Silencing... ");
+        _logger.LogInformation("Silencing...");
         _silence?.Cancel();
         _playing?.Stop();
         _playing?.Dispose();
         _playing = null;
         _synth.SpeakAsyncCancelAll();
-        _logger.LogInformation("Silenced... ");
+        _logger.LogInformation("Silenced.");
     }
 
     protected async override Task ExecuteAsync(
@@ -399,10 +401,10 @@ public class Announcer : BackgroundService, IAnnouncer
         CancellationToken stoppingToken,
         int pauseTimeMilliseconds = Default_Length)
     {
+        _playing = sound;
+        _playing?.Play();
         if (sound is not null)
         {
-            _playing = sound;
-            sound.Play();
             await Task.Delay(pauseTimeMilliseconds, stoppingToken);
         }
         SelectVoice();
@@ -424,3 +426,5 @@ public class Announcer : BackgroundService, IAnnouncer
         base.Dispose();
     }
 }
+
+#nullable disable

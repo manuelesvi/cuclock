@@ -89,11 +89,12 @@ public partial class App : Application
                 services.Configure<LocalSettingsOptions>(context.Configuration.GetSection(
                     nameof(LocalSettingsOptions)));
 
-                // services.AddHostedService<Announcer>();
+                services.AddHostedService(services =>
+                    (Announcer)services.GetService<IAnnouncer>()!);
             }).Build();
 
         App.GetService<IAppNotificationService>().Initialize();
-
+        Task.Run(async () => await Host.RunAsync());
         UnhandledException += App_UnhandledException;
     }
 
@@ -111,6 +112,5 @@ public partial class App : Application
             AppContext.BaseDirectory));
 
         await App.GetService<IActivationService>().ActivateAsync(args);
-        App.GetService<IAnnouncer>().Announce();
     }
 }

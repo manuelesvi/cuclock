@@ -48,4 +48,6 @@ public partial class TimeDisplayViewModel : BaseViewModel
     {
         get;
     }
+
+    public IAnnouncer Announcer => _announcer;
 }

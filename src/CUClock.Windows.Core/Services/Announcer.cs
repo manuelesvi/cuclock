@@ -105,7 +105,6 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly ILogger<Announcer> _logger;
 
 #pragma warning disable CA1416 // skip platform compatibility
-    // TODO: move wav files and include 'em as resources
     private readonly SoundPlayer
         _bells,
         _cucu,

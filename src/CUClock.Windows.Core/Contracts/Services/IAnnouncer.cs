@@ -9,12 +9,12 @@ public interface IAnnouncer : IDisposable
     /// Announces the current time.
     /// </summary>
     /// <param name="sayMilliseconds">
-    /// Say milliseconds in the announcement.
+    /// Include milliseconds in the announcement.
     /// </param>
     public void Announce(bool sayMilliseconds = true);
 
     /// <summary>
-    /// Silences audio output.
+    /// Silences ALL audio output.
     /// </summary>
     public void Silence();
 }

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CUClock", "CUClock\CUClock.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CUClock.Windows", "CUClock.Windows\CUClock.Windows.csproj", "{48F113CA-DC4F-4A72-A5AE-70FB0ADA514C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CUClock.Core", "CUClock.Windows.Core\CUClock.Core.csproj", "{9B497FA6-6E6C-4622-9EBA-ACEDF8E950C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CUClock.Windows.Core", "CUClock.Windows.Core\CUClock.Windows.Core.csproj", "{9B497FA6-6E6C-4622-9EBA-ACEDF8E950C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

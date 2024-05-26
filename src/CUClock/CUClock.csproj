@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CUClock.Windows.Core\CUClock.Core.csproj" />
+    <ProjectReference Include="..\CUClock.Windows.Core\CUClock.Windows.Core.csproj" />
   </ItemGroup>
 </Project>

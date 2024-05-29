@@ -42,12 +42,15 @@ public partial class TimeDisplayViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Silence command.
+    /// Gets the Silence command.
     /// </summary>
     public IAsyncRelayCommand Silence
     {
         get;
     }
 
+    /// <summary>
+    /// Gets the announcer component.
+    /// </summary>
     public IAnnouncer Announcer => _announcer;
 }

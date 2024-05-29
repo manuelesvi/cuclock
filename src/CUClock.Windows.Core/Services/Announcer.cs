@@ -126,7 +126,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private CancellationTokenSource? _silence;
 
     /// <summary>
-    /// Main constructor
+    /// Main constructor.
     /// </summary>
     /// <param name="logger"></param>
     public Announcer(ILogger<Announcer> logger)

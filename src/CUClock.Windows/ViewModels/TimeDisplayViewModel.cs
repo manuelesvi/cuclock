@@ -7,10 +7,10 @@ namespace CUClock.Windows.ViewModels;
 
 public partial class TimeDisplayViewModel : BaseViewModel
 {
-    private readonly IAnnouncer _announcer;
-
     [ObservableProperty]
     private bool _millisecondSwitch;
+
+    private readonly IAnnouncer _announcer;
 
     /// <summary>
     /// Default constructor.
@@ -39,10 +39,10 @@ public partial class TimeDisplayViewModel : BaseViewModel
     public IAsyncRelayCommand Announce
     {
         get;
-    }
+    } 
 
     /// <summary>
-    /// Gets the Silence command.
+    /// Silence command.
     /// </summary>
     public IAsyncRelayCommand Silence
     {
@@ -50,7 +50,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Gets the announcer component.
+    /// Announcer component.
     /// </summary>
     public IAnnouncer Announcer => _announcer;
 }

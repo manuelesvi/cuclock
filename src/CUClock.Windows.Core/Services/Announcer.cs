@@ -129,7 +129,8 @@ public class Announcer : BackgroundService, IAnnouncer
     /// Main constructor.
     /// </summary>
     /// <param name="logger"></param>
-    public Announcer(ILogger<Announcer> logger)
+    public Announcer(
+        ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;

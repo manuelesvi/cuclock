@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Aphorismus.Shared.Services;
 using CUClock.Windows.Activation;
 using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Core;
@@ -13,7 +14,10 @@ using CUClock.Windows.Views;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using SQLitePCL;
+using Windows.System;
 
 namespace CUClock.Windows;
 
@@ -76,6 +80,25 @@ public partial class App : Application
                 // Core Services
                 services.AddSingleton<IFileService, FileService>();
                 services.AddSingleton<IAnnouncer, Announcer>();
+                services.AddTransient<IPhraseProvider, PhraseProvider>(services => 
+                {
+                    var p = new PhraseProvider(services.GetService<ILogger<PhraseProvider>>()!);
+                    p.FileExists = filePath => Task.FromResult(
+                        File.Exists(AppendRoot(filePath)));
+                    p.ReadFile = filePath => Task.FromResult(
+                        (Stream)File.OpenRead(AppendRoot(filePath)));
+                    return p;
+
+                    static string AppendRoot(string filePath)
+                    {
+                        filePath = filePath.Replace("/", "\\");
+                        var path = Path.Combine(
+                            @"C:\Users\manchax\source\repos\cuclock\src\aphorismus\src\Aphorismus\Resources\Raw",
+                            filePath);
+                        System.Diagnostics.Debug.WriteLine(path);
+                        return path;
+                    }
+                });
 
                 // Views and ViewModels
                 services.AddTransient<SettingsViewModel>();

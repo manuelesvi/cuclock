@@ -2,6 +2,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
+using Aphorismus.Shared.Messages;
+using Aphorismus.Shared.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Cronos;
 using CUClock.Windows.Core.Contracts.Services;
 using Humanizer;
@@ -99,6 +102,9 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly CultureInfo _mxCulture
         = CultureInfo.GetCultureInfo("es-MX");
 
+
+    private readonly IPhraseProvider _phraseProvider;
+
     /// <summary>
     /// Logging.
     /// </summary>
@@ -130,12 +136,20 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     /// <param name="logger"></param>
     public Announcer(
+        IPhraseProvider phraseProvider,
         ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
+        _phraseProvider = phraseProvider;
         _logger = logger;
-
+        var isRegistered = WeakReferenceMessenger.Default
+            .IsRegistered<PhrasePickedMessage>(this);
+        if (!isRegistered)
+        {
+            WeakReferenceMessenger.Default.Register<PhrasePickedMessage>(this,
+                (_, message) => ProcessMessage(message));
+        }
         var entry = System.Reflection.Assembly.GetEntryAssembly()!
             .Location;
 
@@ -272,6 +286,8 @@ public class Announcer : BackgroundService, IAnnouncer
 
         await Announce(txt, _cucaracha,
             stoppingToken ?? _silence.Token);
+
+        SpeakPhrase(stoppingToken ?? _silence.Token);
     }
 
     private static string Faltan(
@@ -363,6 +379,8 @@ public class Announcer : BackgroundService, IAnnouncer
         await Announce(string.Format("La{1} {0} en punto", hora,
             hora == 1 ? "" : "s"),
             sound: _cucu, stoppingToken);
+
+        SpeakPhrase(stoppingToken);
     }
 
     private async void CuartoDeHora(CancellationToken stoppingToken)
@@ -373,6 +391,7 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora);
         await Announce(txt, _bells, stoppingToken, Bells_Length);
+        SpeakPhrase(stoppingToken);
     }
 
     private async void YMedia(CancellationToken stoppingToken)
@@ -383,6 +402,7 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} {1} y media",
             PrefijoHora(hora, conArticulo: false), hora);
         await Announce(txt, _cucaracha, stoppingToken);
+        SpeakPhrase(stoppingToken);
     }
 
     private async void CuartoPara(CancellationToken stoppingToken)
@@ -394,6 +414,7 @@ public class Announcer : BackgroundService, IAnnouncer
             PrefijoHora(hora, conArticulo: false), hora,
             hora > 1 ? "s" : "");
         await Announce(txt, _bells, stoppingToken, Bells_Length);
+        SpeakPhrase(stoppingToken);
     }
 
     private async Task Announce(string text,
@@ -410,6 +431,21 @@ public class Announcer : BackgroundService, IAnnouncer
         SelectVoice();
         _synth.Speak(text);
         _logger.LogInformation(text);
+    }
+
+    private CancellationToken? _stoppingToken = null;
+    private void SpeakPhrase(CancellationToken stoppingToken)
+    {
+        _stoppingToken = stoppingToken;
+        _stoppingToken.Value.Register(_synth.SpeakAsyncCancelAll);
+        ((PhraseProvider)_phraseProvider).SendPhrase(_random);
+        _stoppingToken = null;
+    }
+
+    private void ProcessMessage(PhrasePickedMessage message)
+    {
+        SelectVoice();
+        _synth.SpeakAsync(message.Value.Texto);
     }
 
     private void SelectVoice() => _synth.SelectVoice(_voices[

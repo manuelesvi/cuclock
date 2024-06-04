@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
@@ -47,15 +48,14 @@ public class Announcer : BackgroundService, IAnnouncer
     private const int Bells_Length   = 150 * 100;
 
     /// <summary>
-    /// Precision for hour, minute and second.
+    /// Precision for minute and second.
     /// </summary>
-    private const int Precision_Second = 3;
+    private const int Precision_Second = 2;
 
     /// <summary>
-    /// Precision for hour, minute, second
-    /// and millisecond.
+    /// Precision for minute, second and millisecond.
     /// </summary>
-    private const int Precision_Millisecond = 4;
+    private const int Precision_Millisecond = 3;
 
     /// <summary>
     /// TwoLetter ISO code.
@@ -254,7 +254,7 @@ public class Announcer : BackgroundService, IAnnouncer
 
         Trace.Assert(tasks.Count == FiveTasks,
             $"Invalid count, expected {FiveTasks}");
-        await Task.WhenAll(tasks.ToArray()); // done
+        await Task.WhenAll([.. tasks]); // done
     }
 
     private static string PrefijoHora(int hora,
@@ -273,16 +273,30 @@ public class Announcer : BackgroundService, IAnnouncer
         CancellationToken? stoppingToken = null)
     {
         _silence = new CancellationTokenSource();
-        var txt = string.Format(DateTime.Now.Minute > HalfHour
-            ? Faltan(sayMilliseconds) : "Es : {0}",
-            sayMilliseconds ? DateTime.Now.TimeOfDay
-                .Humanize(minUnit: TimeUnit.Millisecond,
+        var now = DateTime.Now;
+        var txt = string.Format(now.Minute > HalfHour
+            ? Faltan(sayMilliseconds) : 
+            now.Hour >= 1 && now.Hour < 12 ?
+             "{0} de la mañana, {1}"
+             : now.Hour == 12 
+             ? "doce del medio día, "
+             : now.Hour >= 13 
+             ? "{0} de la {2}, {1}"
+             : "doce de la noche, ", // now.Hour == 0
+            string.Format("{0} {1}", PrefijoHora(now.Hour - 12), now.Hour - 12),
+            sayMilliseconds ? now.TimeOfDay
+                .Humanize(
+                    maxUnit: TimeUnit.Minute,
+                    minUnit: TimeUnit.Millisecond,
                     culture: _mxCulture,
                     precision: Precision_Millisecond)
-            : DateTime.Now.TimeOfDay.Humanize(
+            : now.TimeOfDay.Humanize(
+                maxUnit: TimeUnit.Minute,
                 minUnit: TimeUnit.Second,
                 culture: _mxCulture,
-                precision: Precision_Second));
+                precision: Precision_Second),
+            now.Hour >= 13 && now.Hour < 20
+            ? "tarde" : "noche");
 
         await Announce(txt, _cucaracha,
             stoppingToken ?? _silence.Token);
@@ -308,7 +322,8 @@ public class Announcer : BackgroundService, IAnnouncer
             "Faltan {3} {0} {4} para la{2} {1}",
             60 - DateTime.Now.Minute,
             horaSig, SufijoHora(horaSig),
-            secondsTxt, string.Empty);
+            secondsTxt,
+            saySecondsAndMilliseconds ? "minutos" : string.Empty);
 
         return txt;
     }
@@ -422,6 +437,8 @@ public class Announcer : BackgroundService, IAnnouncer
         CancellationToken stoppingToken,
         int pauseTimeMilliseconds = Default_Length)
     {
+        _logger.LogTrace("Announce began execution...");
+        _logger.LogInformation(text);
         _playing = sound;
         _playing?.Play();
         if (sound is not null)
@@ -429,8 +446,9 @@ public class Announcer : BackgroundService, IAnnouncer
             await Task.Delay(pauseTimeMilliseconds, stoppingToken);
         }
         SelectVoice();
+        _logger.LogTrace("Calling Speak() on speech synthesizer");
         _synth.Speak(text);
-        _logger.LogInformation(text);
+        _logger.LogTrace("Announce execution finished.");
     }
 
     private CancellationToken? _stoppingToken = null;

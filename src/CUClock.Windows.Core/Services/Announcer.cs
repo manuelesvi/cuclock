@@ -274,23 +274,24 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         _silence = new CancellationTokenSource();
         var now = DateTime.Now;
+        var hora = now.Hour > 12 ? now.Hour - 12: now.Hour;
         var txt = string.Format(now.Minute > HalfHour
-            ? Faltan(sayMilliseconds) : 
-            now.Hour >= 1 && now.Hour < 12 ?
-             "{0} de la mañana, {1}"
-             : now.Hour == 12 
-             ? "doce del medio día, "
-             : now.Hour >= 13 
-             ? "{0} de la {2}, {1}"
-             : "doce de la noche, ", // now.Hour == 0
-            string.Format("{0} {1}", PrefijoHora(now.Hour - 12), now.Hour - 12),
-            sayMilliseconds ? now.TimeOfDay
+            ? Faltan(sayMilliseconds)
+            : now.Hour >= 1 && now.Hour < 12 
+            ? "{0} de la mañana, {1}"
+            : now.Hour == 12 
+            ? "doce del medio día, "
+            : now.Hour >= 13 
+            ? "{0} de la {2}, {1}"
+            : "doce de la noche, ", // now.Hour == 0
+            string.Format("{0} {1}", PrefijoHora(hora), hora),
+            sayMilliseconds ? now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour))
                 .Humanize(
                     maxUnit: TimeUnit.Minute,
                     minUnit: TimeUnit.Millisecond,
                     culture: _mxCulture,
                     precision: Precision_Millisecond)
-            : now.TimeOfDay.Humanize(
+            : now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour)).Humanize(
                 maxUnit: TimeUnit.Minute,
                 minUnit: TimeUnit.Second,
                 culture: _mxCulture,
@@ -451,13 +452,10 @@ public class Announcer : BackgroundService, IAnnouncer
         _logger.LogTrace("Announce execution finished.");
     }
 
-    private CancellationToken? _stoppingToken = null;
     private void SpeakPhrase(CancellationToken stoppingToken)
     {
-        _stoppingToken = stoppingToken;
-        _stoppingToken.Value.Register(_synth.SpeakAsyncCancelAll);
+        stoppingToken.Register(_synth.SpeakAsyncCancelAll);
         ((PhraseProvider)_phraseProvider).SendPhrase(_random);
-        _stoppingToken = null;
     }
 
     private void ProcessMessage(PhrasePickedMessage message)

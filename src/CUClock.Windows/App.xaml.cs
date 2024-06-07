@@ -82,20 +82,23 @@ public partial class App : Application
                 services.AddSingleton<IAnnouncer, Announcer>();
                 services.AddTransient<IPhraseProvider, PhraseProvider>(services => 
                 {
-                    var p = new PhraseProvider(services.GetService<ILogger<PhraseProvider>>()!);
-                    p.FileExists = filePath => Task.FromResult(
-                        File.Exists(AppendRoot(filePath)));
-                    p.ReadFile = filePath => Task.FromResult(
-                        (Stream)File.OpenRead(AppendRoot(filePath)));
+                    var logger = services.GetService<ILogger<PhraseProvider>>()!;
+                    var p = new PhraseProvider(logger)
+                    {
+                        FileExists = filePath => Task.FromResult(
+                            File.Exists(AppendRoot(filePath))),
+                        ReadFile = filePath => Task.FromResult(
+                            (Stream)File.OpenRead(AppendRoot(filePath)))
+                    };
                     return p;
 
-                    static string AppendRoot(string filePath)
+                    string AppendRoot(string filePath)
                     {
                         filePath = filePath.Replace("/", "\\");
                         var path = Path.Combine(
                             @"C:\Users\manchax\source\repos\cuclock\src\aphorismus\src\Aphorismus\Resources\Raw",
                             filePath);
-                        System.Diagnostics.Debug.WriteLine(path);
+                        logger.LogInformation("Fetching content from: {path}", path);
                         return path;
                     }
                 });

@@ -2,7 +2,6 @@
 using System.Web;
 
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.ViewModels;
 
 using Microsoft.Windows.AppNotifications;
 

@@ -1,4 +1,5 @@
-﻿using Aphorismus.Shared.Messages;
+﻿using System.Diagnostics;
+using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Core;
@@ -23,14 +24,23 @@ public sealed partial class TimeDisplayPage : Page
         if (!isRegistered)
         {
             WeakReferenceMessenger.Default.Register<PhrasePickedMessage>(this,
-                (_, message) => {
+                (_, message) =>
+                {
                     var payload = string.Format(
                         "AppNotificationSamplePayload".GetLocalized(),
                         AppContext.BaseDirectory, message.Value.Texto);
-                    App.GetService<IAppNotificationService>().Show(payload);
+
+                    try
+                    {
+                        App.GetService<IAppNotificationService>().Show(payload);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+                        Debugger.Break();
+                    }
                 });
         }
-        
     }
 
     public TimeDisplayViewModel ViewModel

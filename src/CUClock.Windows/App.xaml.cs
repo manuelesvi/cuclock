@@ -5,7 +5,6 @@ using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Core;
 using CUClock.Windows.Core.Contracts.Services;
 using CUClock.Windows.Core.Services;
-using CUClock.Windows.Helpers;
 using CUClock.Windows.Models;
 using CUClock.Windows.Notifications;
 using CUClock.Windows.Services;
@@ -16,8 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-using SQLitePCL;
-using Windows.System;
 
 namespace CUClock.Windows;
 
@@ -80,26 +77,32 @@ public partial class App : Application
                 // Core Services
                 services.AddSingleton<IFileService, FileService>();
                 services.AddSingleton<IAnnouncer, Announcer>();
-                services.AddTransient<IPhraseProvider, PhraseProvider>(services => 
+                services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
                 {
                     var logger = services.GetService<ILogger<PhraseProvider>>()!;
-                    var p = new PhraseProvider(logger)
+                    var path = Path.GetDirectoryName(Environment.ProcessPath!)!;
+                    DirectoryInfo di;
+                    while ((di = Directory.GetParent(path)!).Name != "src")
+                    {
+                        path = di.FullName;
+                    }
+                    di = Directory.GetParent(path)!;
+                    path = Path.Combine(di.FullName, "aphorismus\\src\\Aphorismus\\Resources\\Raw");
+
+                    return new PhraseProvider(logger)
                     {
                         FileExists = filePath => Task.FromResult(
                             File.Exists(AppendRoot(filePath))),
                         ReadFile = filePath => Task.FromResult(
                             (Stream)File.OpenRead(AppendRoot(filePath)))
                     };
-                    return p;
 
                     string AppendRoot(string filePath)
                     {
                         filePath = filePath.Replace("/", "\\");
-                        var path = Path.Combine(
-                            @"C:\Users\manchax\source\repos\cuclock\src\aphorismus\src\Aphorismus\Resources\Raw",
-                            filePath);
-                        logger.LogInformation("Fetching content from: {path}", path);
-                        return path;
+                        var fullPath = Path.Combine(path, filePath);
+                        logger.LogInformation("Fetching content from: {path}", fullPath);
+                        return fullPath;
                     }
                 });
 

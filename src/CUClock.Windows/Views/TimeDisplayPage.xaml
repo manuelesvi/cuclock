@@ -13,12 +13,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="50*" />
-            <ColumnDefinition Width="50*" />
+            <ColumnDefinition Width="33*" />
+            <ColumnDefinition Width="33*" />
+            <ColumnDefinition Width="34*" />
         </Grid.ColumnDefinitions>
         
         <ToggleSwitch
             x:Name="msToggle"
+            Grid.ColumnSpan="3"
             Toggled="ToggleSwitch_Toggled"
             OffContent="Sin milisegundos"
             OnContent="Con milisegundos"
@@ -28,8 +30,14 @@
                 Grid.Row="1" Grid.Column="0"
                 HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Announce}" />
-        <Button x:Uid="TimeDisplayPage_SilenceBtn"
+        
+        <Button x:Uid="TimeDisplayPage_PhraseBtn"
                 Grid.Row="1" Grid.Column="1"
+                HorizontalAlignment="Stretch"
+                Command="{x:Bind ViewModel.SpeakPhrase}" />
+
+        <Button x:Uid="TimeDisplayPage_SilenceBtn"
+                Grid.Row="1" Grid.Column="2"
                 HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Silence}" />
     </Grid>

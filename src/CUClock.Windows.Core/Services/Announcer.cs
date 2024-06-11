@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
@@ -81,9 +80,6 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private const int FiveTasks = 5;
 
-    private readonly Random
-        _random = new(); // some randomness
-
     /// <summary>
     /// Defines a speaking task
     /// programmed to execute in the future.
@@ -102,7 +98,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly CultureInfo _mxCulture
         = CultureInfo.GetCultureInfo("es-MX");
 
-
+    private readonly Random _random = new();
     private readonly IPhraseProvider _phraseProvider;
 
     /// <summary>
@@ -127,7 +123,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// A <see cref="List{VoiceInfo}"/> of installed voices in 
     /// <see cref="Spanish">.
     /// </summary>
-    private readonly List<VoiceInfo> _voices = new();
+    private readonly List<VoiceInfo> _voices = [];
 
     private CancellationTokenSource? _silence;
 
@@ -230,6 +226,14 @@ public class Announcer : BackgroundService, IAnnouncer
         _playing = null;
         _synth.SpeakAsyncCancelAll();
         _logger.LogInformation("Silenced.");
+    }
+
+    public void SpeakPhrase()
+    {
+        Silence();
+        _silence = new CancellationTokenSource();
+
+        SpeakPhrase(_silence.Token);
     }
 
     protected async override Task ExecuteAsync(

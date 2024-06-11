@@ -11,10 +11,12 @@ public interface IAnnouncer : IDisposable
     /// <param name="sayMilliseconds">
     /// Include milliseconds.
     /// </param>
-    public void Announce(bool sayMilliseconds = true);
+    void Announce(bool sayMilliseconds = true);
+
+    void SpeakPhrase();
 
     /// <summary>
     /// Silences audio output.
     /// </summary>
-    public void Silence();
+    void Silence();
 }

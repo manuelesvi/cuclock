@@ -2,8 +2,6 @@
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core;
-using CUClock.Windows.Core.Contracts.Services;
 using CUClock.Windows.Helpers;
 using CUClock.Windows.ViewModels;
 using Microsoft.UI.Xaml.Controls;
@@ -17,7 +15,7 @@ public sealed partial class TimeDisplayPage : Page
         ViewModel = App.GetService<TimeDisplayViewModel>();
         InitializeComponent();
         // ... testing localized resources
-        System.Diagnostics.Debug.WriteLine(
+        Debug.WriteLine(
             "TimeDisplayPage_AnnounceBtn/Content".GetLocalized());
         var isRegistered = WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this);

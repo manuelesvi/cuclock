@@ -19,32 +19,37 @@ public partial class TimeDisplayViewModel : BaseViewModel
     public TimeDisplayViewModel(IAnnouncer announcer)
     {
         _announcer = announcer;
-        Announce = new AsyncRelayCommand(async () =>
-        {
+        Announce = new RelayCommand(() => 
             _announcer.Announce(
-                sayMilliseconds: MillisecondSwitch);
-            await Task.CompletedTask;
-        });
+                sayMilliseconds: MillisecondSwitch));
 
-        Silence = new AsyncRelayCommand(async () =>
-        {
-            _announcer.Silence();
-            await Task.CompletedTask;
-        });
+        Silence = new RelayCommand(() => 
+            _announcer.Silence());
+
+        SpeakPhrase = new RelayCommand(() =>
+            _announcer.SpeakPhrase());
     }
 
     /// <summary>
     /// Announce command.
     /// </summary>
-    public IAsyncRelayCommand Announce
+    public IRelayCommand Announce
     {
         get;
-    } 
-
+    }
+    
     /// <summary>
     /// Silence command.
     /// </summary>
-    public IAsyncRelayCommand Silence
+    public IRelayCommand Silence
+    {
+        get;
+    }
+
+    /// <summary>
+    /// SpeakPhrase command.
+    /// </summary>
+    public IRelayCommand SpeakPhrase
     {
         get;
     }

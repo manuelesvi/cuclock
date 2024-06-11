@@ -13,6 +13,9 @@ public interface IAnnouncer : IDisposable
     /// </param>
     void Announce(bool sayMilliseconds = true);
 
+    /// <summary>
+    /// Speaks a random phrase (no time).
+    /// </summary>
     void SpeakPhrase();
 
     /// <summary>

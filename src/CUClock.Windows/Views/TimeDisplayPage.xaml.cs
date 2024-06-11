@@ -14,28 +14,24 @@ public sealed partial class TimeDisplayPage : Page
     {
         ViewModel = App.GetService<TimeDisplayViewModel>();
         InitializeComponent();
-        // ... testing localized resources
-        Debug.WriteLine(
-            "TimeDisplayPage_AnnounceBtn/Content".GetLocalized());
-        var isRegistered = WeakReferenceMessenger.Default
-            .IsRegistered<PhrasePickedMessage>(this);
-        if (!isRegistered)
+        if (!WeakReferenceMessenger.Default
+            .IsRegistered<PhrasePickedMessage>(this))
         {
             WeakReferenceMessenger.Default.Register<PhrasePickedMessage>(this,
                 (_, message) =>
                 {
-                    var payload = string.Format(
-                        "AppNotificationSamplePayload".GetLocalized(),
+                    var payload = string.Format("AppNotificationSamplePayload".GetLocalized(),
                         AppContext.BaseDirectory, message.Value.Texto);
-
                     try
                     {
                         App.GetService<IAppNotificationService>().Show(payload);
                     }
                     catch (Exception ex)
                     {
+#if DEBUG
                         Debug.WriteLine(ex);
                         Debugger.Break();
+#endif
                     }
                 });
         }

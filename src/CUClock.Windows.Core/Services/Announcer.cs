@@ -41,10 +41,10 @@ namespace CUClock.Windows.Core;
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
 ///  </example>
 public class Announcer : BackgroundService, IAnnouncer
-{
-    // 41 & 150 seconds
-    private const int Default_Length =  41 * 100;
-    private const int Bells_Length   = 150 * 100;
+{    
+    private const int Default_Duration =  41 * 100; // 41 seconds
+    private const int Bells_Duration   = 150 * 100; // 150 seconds
+    private const int BellsAfter_Delay = 370 * 100; // delay after 1st melody
 
     /// <summary>
     /// Precision for minute and second.
@@ -410,7 +410,8 @@ public class Announcer : BackgroundService, IAnnouncer
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora);
-        await Announce(txt, _bells, stoppingToken, Bells_Length);
+        await Announce(txt, _bells, stoppingToken, Bells_Duration);
+        await Task.Delay(BellsAfter_Delay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
 
@@ -433,14 +434,15 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} cuarto para la{2} {1}",
             PrefijoHora(hora, conArticulo: false), hora,
             hora > 1 ? "s" : "");
-        await Announce(txt, _bells, stoppingToken, Bells_Length);
+        await Announce(txt, _bells, stoppingToken, Bells_Duration);
+        await Task.Delay(BellsAfter_Delay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
 
     private async Task Announce(string text,
         SoundPlayer? sound,
         CancellationToken stoppingToken,
-        int pauseTimeMilliseconds = Default_Length)
+        int pauseTimeMilliseconds = Default_Duration)
     {
         _logger.LogTrace("Announce began execution...");
         _logger.LogInformation(text);

@@ -249,7 +249,6 @@ public class Announcer : BackgroundService, IAnnouncer
                 sayMilliseconds: true,
                 stoppingToken)
         };
-
         foreach (var key in Schedules.Keys)
         {
             tasks.Add(
@@ -270,8 +269,8 @@ public class Announcer : BackgroundService, IAnnouncer
             ? "Son"
             : "Es";
 
-    private static object SufijoHora(int hora) =>
-        hora > 1 ? "s" : "";
+    private static object SufijoHora(int hora)
+        => hora > 1 ? "s" : "";
 
     private async Task SayCurrentTime(bool sayMilliseconds = true,
         CancellationToken? stoppingToken = null)
@@ -300,8 +299,7 @@ public class Announcer : BackgroundService, IAnnouncer
                 minUnit: TimeUnit.Second,
                 culture: _mxCulture,
                 precision: Precision_Second),
-            now.Hour >= 13 && now.Hour < 20
-            ? "tarde" : "noche");
+            now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
 
         await Announce(txt, _cucaracha,
             stoppingToken ?? _silence.Token);
@@ -396,7 +394,8 @@ public class Announcer : BackgroundService, IAnnouncer
 
         await Announce(txt, _cucu, stoppingToken);
         await Task.Delay(250, stoppingToken);
-        await Announce(string.Format("La{1} {0} en punto", hora,
+        await Announce(string.Format("La{1} {0} en punto",
+            hora > 1 ? hora.ToString() : "una",
             hora == 1 ? "" : "s"),
             sound: _cucu, stoppingToken);
 
@@ -454,7 +453,17 @@ public class Announcer : BackgroundService, IAnnouncer
         }
         SelectVoice();
         _logger.LogTrace("Calling Speak() on speech synthesizer");
-        _synth.Speak(text);
+        try
+        {
+            _synth.Speak(text);
+        }
+        catch (OperationCanceledException e)
+        {
+            _logger.LogError(e, "TTS operation was canceled.");
+#if DEBUG
+            Debugger.Break();
+#endif
+        }
         _logger.LogTrace("Announce execution finished.");
     }
 

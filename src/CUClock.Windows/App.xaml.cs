@@ -87,7 +87,8 @@ public partial class App : Application
                         path = di.FullName;
                     }
                     di = Directory.GetParent(path)!;
-                    path = Path.Combine(di.FullName, "aphorismus\\src\\Aphorismus\\Resources\\Raw");
+                    path = Path.Combine(di.FullName,
+                        "aphorismus\\src\\Aphorismus\\Resources\\Raw");
 
                     return new PhraseProvider(logger)
                     {

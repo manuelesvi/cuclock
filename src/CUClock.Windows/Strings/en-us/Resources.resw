@@ -124,7 +124,7 @@
     <value>CUClock.Windows</value>
   </data>
   <data name="Shell_TimeDisplay.Content" xml:space="preserve">
-    <value>Aphorismus</value>
+    <value>Aforismos</value>
   </data>
   <data name="Settings_Personalization.Text" xml:space="preserve">
     <value>Personalization</value>
@@ -142,10 +142,10 @@
     <value>Default</value>
   </data>
   <data name="Settings_About.Text" xml:space="preserve">
-    <value>About this application</value>
+    <value>Reloj CUCU</value>
   </data>
   <data name="Settings_AboutDescription.Text" xml:space="preserve">
-    <value>TODO: Replace with your app description.</value>
+    <value>Da la hora en intervalos 0, 15, 30 y 45 mins. cada hora junto con un aforismo aleatorio</value>
   </data>
   <data name="SettingsPage_PrivacyTermsLink.Content" xml:space="preserve">
     <value>Privacy Statement</value>
@@ -170,12 +170,12 @@
     <comment>Toast notification for Phrase with Silence button</comment>
   </data>
   <data name="TimeDisplayPage_AnnounceBtn.Content" xml:space="preserve">
-    <value>Announce</value>
+    <value>Anunciar</value>
   </data>
   <data name="TimeDisplayPage_SilenceBtn.Content" xml:space="preserve">
-    <value>Silence</value>
+    <value>Silencio</value>
   </data>
   <data name="TimeDisplayPage_PhraseBtn.Content" xml:space="preserve">
-    <value>Phrase</value>
+    <value>Frase</value>
   </data>
 </root>

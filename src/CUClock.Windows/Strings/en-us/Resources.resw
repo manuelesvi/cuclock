@@ -157,15 +157,17 @@
     <value>&lt;toast launch="action=ToastClick"&gt;
   &lt;visual&gt;
     &lt;binding template="ToastGeneric"&gt;
-      &lt;text&gt;{1}&lt;/text&gt;
-      &lt;text&gt;&lt;/text&gt;
-      &lt;image placement="appLogoOverride" hint-crop="circle" src="{0}Assets/WindowIcon.ico"/&gt;
+      &lt;text&gt;{1}&lt;/text&gt;      
+      &lt;image placement="appLogoOverride" hint-crop="circle" 
+                     src="{0}Assets/WindowIcon.ico"/&gt;
     &lt;/binding&gt;
   &lt;/visual&gt;
   &lt;actions&gt;
-    &lt;action content="Settings" arguments="action=Settings"/&gt;
+    &lt;action content="Open" arguments="action=Open"/&gt;
+    &lt;action content="Silence" arguments="action=Silence"/&gt;
   &lt;/actions&gt;
 &lt;/toast&gt;</value>
+    <comment>Toast notification for Phrase with Silence button</comment>
   </data>
   <data name="TimeDisplayPage_AnnounceBtn.Content" xml:space="preserve">
     <value>Announce</value>

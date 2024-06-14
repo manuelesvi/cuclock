@@ -124,7 +124,7 @@
     <value>CUClock.Windows</value>
   </data>
   <data name="Shell_TimeDisplay.Content" xml:space="preserve">
-    <value>CUClock Time Announcer</value>
+    <value>Aphorismus</value>
   </data>
   <data name="Settings_Personalization.Text" xml:space="preserve">
     <value>Personalization</value>

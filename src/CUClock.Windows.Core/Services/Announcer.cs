@@ -110,9 +110,12 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly SoundPlayer
         _bells,
         _cucu,
-        _cucaracha;
+        _cucaracha,
+        _pistol,
+        _gallo;
 
     private SoundPlayer? _playing;
+    private readonly string _wavDir = string.Empty;
 
     /// <summary>
     /// TTS synth (Windows only).
@@ -150,15 +153,16 @@ public class Announcer : BackgroundService, IAnnouncer
             .Location;
 
         var dir = Path.GetDirectoryName(entry)!;
-        var wavs = Path.Combine(dir, "WAVs");
+        _wavDir = Path.Combine(dir, "WAVs");
 
-        _bells = new SoundPlayer(wavs + "\\1-154919.wav");
-        _cucu = new SoundPlayer(wavs + "\\CUCKOOO.WAV");
-        _cucaracha = new SoundPlayer(wavs
-            + "\\Voicy_La Cucaracha Horn.wav");
+        _bells = new SoundPlayer(_wavDir + "\\bells.wav");
+        _cucu = new SoundPlayer(_wavDir + "\\CUCKOOO.WAV");
+        _cucaracha = new SoundPlayer(_wavDir + "\\horn.wav");
+        _pistol = new SoundPlayer(_wavDir + "\\pistol.wav");
+        _gallo = new SoundPlayer();
 
         Trace.Assert(Directory.Exists(dir)
-            && Directory.Exists(wavs), "dir not found");
+            && Directory.Exists(_wavDir), "dir not found");
 
         Schedules = new Dictionary<CronExpression, Schedule>
         {
@@ -228,12 +232,36 @@ public class Announcer : BackgroundService, IAnnouncer
         _logger.LogInformation("Silenced.");
     }
 
-    public void SpeakPhrase()
+    public void SpeakPhrase(bool conGallo)
     {
         Silence();
         _silence = new CancellationTokenSource();
+        var _ = Task.Run(async () =>
+        {
+            if (conGallo)
+            {
+                IList<(string file, int duration)> gallos = [
+                    ("rooster1.wav", 30), // 3 segundos
+                    ("rooster2.wav", 35)]; // 3.5s
 
-        SpeakPhrase(_silence.Token);
+                var gallo = gallos[_random.Next(0, 2)];
+                _gallo.SoundLocation = _wavDir + "\\" + gallo.file;
+                _gallo.Load();
+                _playing = _gallo;
+                _gallo.Play();
+
+                _logger.LogInformation("@{now} - Sleeping for {time} ms.",
+                    DateTime.Now.TimeOfDay, gallo.duration * 100);
+                
+                await Task.Delay(gallo.duration * 100);
+
+                _logger.LogInformation("@{now} Woke up!", DateTime.Now.TimeOfDay);
+            }
+
+            _pistol.Play();
+            await Task.Delay(2000);
+            SpeakPhrase(_silence.Token);
+        });
     }
 
     protected async override Task ExecuteAsync(
@@ -408,7 +436,8 @@ public class Announcer : BackgroundService, IAnnouncer
             ? DateTime.Now.TimeOfDay.Hours
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
-            PrefijoHora(hora), hora);
+            PrefijoHora(hora), hora,
+            hora != 1 ? hora : "una");
         await Announce(txt, _bells, stoppingToken, Bells_Duration);
         await Task.Delay(BellsAfter_Delay, stoppingToken);
         SpeakPhrase(stoppingToken);
@@ -420,7 +449,8 @@ public class Announcer : BackgroundService, IAnnouncer
             ? DateTime.Now.TimeOfDay.Hours
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y media",
-            PrefijoHora(hora, conArticulo: false), hora);
+            PrefijoHora(hora, conArticulo: false), // {0}
+            hora != 1 ? hora : "una"); // {1}
         await Announce(txt, _cucaracha, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
@@ -460,9 +490,9 @@ public class Announcer : BackgroundService, IAnnouncer
         catch (OperationCanceledException e)
         {
             _logger.LogError(e, "TTS operation was canceled.");
-#if DEBUG
-            Debugger.Break();
-#endif
+//#if DEBUG
+//            Debugger.Break();
+//#endif
         }
         _logger.LogTrace("Announce execution finished.");
     }

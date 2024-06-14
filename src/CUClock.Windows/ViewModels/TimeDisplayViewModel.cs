@@ -1,43 +1,47 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CUClock.Windows.Core.Contracts.Services;
 using CUClock.Windows.Core.ViewModels;
+using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.ViewModels;
 
+/// <summary>
+/// Default constructor.
+/// </summary>
+/// <param name="announcer"></param>
 public partial class TimeDisplayViewModel : BaseViewModel
 {
+    private readonly IAnnouncer _announcer;
+    private readonly ILogger<TimeDisplayViewModel> _logger;
+    
     [ObservableProperty]
     private bool _millisecondSwitch;
+    
+    [ObservableProperty]
+    private bool _galloSwitch;
 
-    private readonly IAnnouncer _announcer;
-
-    /// <summary>
-    /// Default constructor.
-    /// </summary>
-    /// <param name="announcer"></param>
-    public TimeDisplayViewModel(IAnnouncer announcer)
+    public TimeDisplayViewModel(IAnnouncer announcer,
+        ILogger<TimeDisplayViewModel> logger)
     {
         _announcer = announcer;
-        Announce = new RelayCommand(() => 
-            _announcer.Announce(
-                sayMilliseconds: MillisecondSwitch));
+        _logger = logger;
 
-        Silence = new RelayCommand(() => 
-            _announcer.Silence());
+        MillisecondSwitch = true;
+        GalloSwitch = true;
+        
+        Silence = new RelayCommand(() => _announcer.Silence());
+        SpeakPhrase = new RelayCommand(() => announcer.SpeakPhrase(GalloSwitch));
 
-        SpeakPhrase = new RelayCommand(() =>
-            _announcer.SpeakPhrase());
     }
 
     /// <summary>
     /// Announce command.
     /// </summary>
-    public IRelayCommand Announce
-    {
-        get;
-    }
-    
+    public IRelayCommand Announce => new RelayCommand(() =>
+        _announcer.Announce(MillisecondSwitch));
+
     /// <summary>
     /// Silence command.
     /// </summary>
@@ -54,8 +58,16 @@ public partial class TimeDisplayViewModel : BaseViewModel
         get;
     }
 
-    /// <summary>
-    /// Announcer component.
-    /// </summary>
-    public IAnnouncer Announcer => _announcer;
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        _logger.LogInformation("OnPropertyChanged: {prop}", e.PropertyName);
+        if (e.PropertyName == nameof(MillisecondSwitch))
+        {
+            _logger.LogInformation("Milliseconds: {ms}", MillisecondSwitch);
+        }
+        else if (e.PropertyName == nameof(GalloSwitch))
+        {
+            _logger.LogInformation("Gallo: {gallo}", GalloSwitch);
+        }
+    }
 }

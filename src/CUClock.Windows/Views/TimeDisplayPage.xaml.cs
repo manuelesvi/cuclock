@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Windows.Contracts.Services;
@@ -20,7 +21,20 @@ public sealed partial class TimeDisplayPage : Page
             WeakReferenceMessenger.Default.Register<PhrasePickedMessage>(this,
                 (_, message) =>
                 {
-                    var payload = string.Format("AppNotificationSamplePayload".GetLocalized(),
+                    var value = message.Value;
+                    var sb = new StringBuilder(string.Format("{0} - {1}",
+                        value.Capitulo!.NumeroCapitulo,
+                        value.Capitulo!.Nombre));
+                    sb.AppendLine();
+                    sb.AppendLine();
+                    sb.AppendLine(value.Texto);
+                    _ = DispatcherQueue.TryEnqueue(() =>
+                    {
+                        PhraseBox.Text = sb.ToString();
+                    });
+
+                    var payload = string.Format(
+                        "AppNotificationSamplePayload".GetLocalized(),
                         AppContext.BaseDirectory, message.Value.Texto);
                     try
                     {
@@ -35,15 +49,13 @@ public sealed partial class TimeDisplayPage : Page
                     }
                 });
         }
+
+        msToggle.Toggled += (_, _) => ViewModel.MillisecondSwitch = msToggle.IsOn;
+        galloToggle.Toggled += (_, _) => ViewModel.GalloSwitch = galloToggle.IsOn;
     }
 
     public TimeDisplayViewModel ViewModel
     {
         get;
-    }
-
-    private void ToggleSwitch_Toggled(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
-    {
-        ViewModel.MillisecondSwitch = msToggle.IsOn;
     }
 }

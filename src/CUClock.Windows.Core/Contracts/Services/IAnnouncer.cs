@@ -16,7 +16,7 @@ public interface IAnnouncer : IDisposable
     /// <summary>
     /// Speaks a random phrase (no time).
     /// </summary>
-    void SpeakPhrase();
+    void SpeakPhrase(bool conGallo = true);
 
     /// <summary>
     /// Silences audio output.

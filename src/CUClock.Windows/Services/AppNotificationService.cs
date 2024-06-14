@@ -2,7 +2,7 @@
 using System.Web;
 
 using CUClock.Windows.Contracts.Services;
-
+using CUClock.Windows.Core.Contracts.Services;
 using Microsoft.Windows.AppNotifications;
 
 namespace CUClock.Windows.Notifications;
@@ -40,11 +40,15 @@ public class AppNotificationService : IAppNotificationService
         ////        _navigationService.NavigateTo(typeof(SettingsViewModel).FullName!);
         ////    });
         //// }
+        if (ParseArguments(args.Argument)["action"] == "Silence")
+        {
+            var svc = App.GetService<IAnnouncer>();
+            svc.Silence();
+        }
 
         App.MainWindow.DispatcherQueue.TryEnqueue(() =>
         {
-            App.MainWindow.ShowMessageDialogAsync("TODO: Handle notification invocations when your app is already running.", "Notification Invoked");
-
+            // App.MainWindow.ShowMessageDialogAsync("TODO: Handle notification invocations when your app is already running.", "Notification Invoked");
             App.MainWindow.BringToFront();
         });
     }

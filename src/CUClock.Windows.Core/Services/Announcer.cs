@@ -18,8 +18,8 @@ namespace CUClock.Windows.Core;
 
 /// <summary>
 /// Announces current local time at specific intervals
-/// when executed as a <see cref="BackgroundService"/>,
-/// or at will calling 
+/// when executed as a <see cref="BackgroundService"/>
+/// or at will calling
 /// <see cref="IAnnouncer.Announce(bool)"/> method.
 /// </summary>
 /// <remarks>

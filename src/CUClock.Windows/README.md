@@ -1,9 +1,7 @@
-﻿# CUClock for Windows (WinUI)
+﻿# CUClock for WinUI
 
-Announces time at intervals of 0, 15, 30 and 45 minutes every hour.
+Anuncia la hora a los 0, 15, 30 y 45 minutos de cada hora usando `System.Speech`.
 
-See `Announcer.cs` on `CUClock.Windows.Core` under `Services` folder.
-
-Synthesize voice using `System.Speech`.
+También lee en voz alta una frase escogida aleatoriamente del libro Aforismos de Lev Tolstói.
 
 *Recommended Markdown Viewer: [Markdown Editor](https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2)*

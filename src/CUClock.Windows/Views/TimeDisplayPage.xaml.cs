@@ -11,9 +11,16 @@ namespace CUClock.Windows.Views;
 
 public sealed partial class TimeDisplayPage : Page
 {
+    public TimeDisplayViewModel ViewModel
+    {
+        get;
+    }
+
     public TimeDisplayPage()
     {
         ViewModel = App.GetService<TimeDisplayViewModel>();
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        
         InitializeComponent();
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
@@ -54,8 +61,11 @@ public sealed partial class TimeDisplayPage : Page
         galloToggle.Toggled += (_, _) => ViewModel.GalloSwitch = galloToggle.IsOn;
     }
 
-    public TimeDisplayViewModel ViewModel
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        get;
+        if (e.PropertyName == nameof(ViewModel.Caption))
+        {
+            DispatcherQueue.TryEnqueue(() => CaptionText.Text = ViewModel.Caption);
+        }
     }
 }

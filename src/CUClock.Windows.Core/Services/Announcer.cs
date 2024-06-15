@@ -14,6 +14,14 @@ using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
 
+public class CaptionChangedEventArgs(string text) : EventArgs
+{
+    public string Text
+    {
+        get; init;
+    } = text;
+}
+
 #nullable enable
 
 /// <summary>
@@ -41,7 +49,7 @@ namespace CUClock.Windows.Core;
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)
 ///  </example>
 public class Announcer : BackgroundService, IAnnouncer
-{    
+{
     private const int Default_Duration =  41 * 100; // 41 seconds
     private const int Bells_Duration   = 150 * 100; // 150 seconds
     private const int BellsAfter_Delay = 370 * 100; // delay after 1st melody
@@ -91,6 +99,8 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </param>
     private delegate void Schedule(
         CancellationToken cancellationToken);
+
+    public event EventHandler<CaptionChangedEventArgs> CaptionChanged;
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -171,6 +181,9 @@ public class Announcer : BackgroundService, IAnnouncer
             { CronExpression.Parse("30 * * * SUN-SAT"), YMedia },
             { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
+        
+        _synth.SpeakProgress += (_, e) => OnCaptionChanged(e.Text);
+        _synth.SpeakCompleted += (_, _) => OnCaptionChanged(string.Empty);
 
         var setupTTS = Task.Run(() =>
         {
@@ -178,6 +191,10 @@ public class Announcer : BackgroundService, IAnnouncer
             _synth.Rate = -1;
             // Configures audio output
             _synth.SetOutputToDefaultAudioDevice();
+
+            //// remove handler whenever its done
+            //_synth.SpeakCompleted += (s, e) =>
+            //    _synth.SpeakProgress -= _synth_SpeakProgress;
         });
 
         var readVoices = Task.Run(() =>
@@ -311,7 +328,7 @@ public class Announcer : BackgroundService, IAnnouncer
             : now.Hour >= 1 && now.Hour < 12 
             ? "{0} de la mañana, {1}"
             : now.Hour == 12 
-            ? "doce del medio día, "
+            ? "doce del medio día, {1}"
             : now.Hour >= 13 
             ? "{0} de la {2}, {1}"
             : "doce de la noche, ", // now.Hour == 0
@@ -508,6 +525,9 @@ public class Announcer : BackgroundService, IAnnouncer
         SelectVoice();
         _synth.SpeakAsync(message.Value.Texto);
     }
+
+    private void OnCaptionChanged(string text)
+        => CaptionChanged?.Invoke(this, new CaptionChangedEventArgs(text));
 
     private void SelectVoice() => _synth.SelectVoice(_voices[
             _random.Next(0, _voices.Count) // selects a random voice

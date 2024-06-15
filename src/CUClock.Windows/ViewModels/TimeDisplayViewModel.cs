@@ -21,7 +21,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
     
     [ObservableProperty]
     private bool _galloSwitch;
-
+        
     public TimeDisplayViewModel(IAnnouncer announcer,
         ILogger<TimeDisplayViewModel> logger)
     {
@@ -33,7 +33,12 @@ public partial class TimeDisplayViewModel : BaseViewModel
         
         Silence = new RelayCommand(() => _announcer.Silence());
         SpeakPhrase = new RelayCommand(() => announcer.SpeakPhrase(GalloSwitch));
-
+        Caption = string.Empty;
+        _announcer.CaptionChanged += (_, e) =>
+        {
+            Caption = e.Text;
+            OnPropertyChanged(nameof(Caption));
+        };
     }
 
     /// <summary>
@@ -58,16 +63,24 @@ public partial class TimeDisplayViewModel : BaseViewModel
         get;
     }
 
+    public string Caption
+    {
+        get; set;
+    }
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
-        _logger.LogInformation("OnPropertyChanged: {prop}", e.PropertyName);
         if (e.PropertyName == nameof(MillisecondSwitch))
         {
+            _logger.LogInformation("OnPropertyChanged: {prop}", e.PropertyName);
             _logger.LogInformation("Milliseconds: {ms}", MillisecondSwitch);
         }
         else if (e.PropertyName == nameof(GalloSwitch))
         {
+            _logger.LogInformation("OnPropertyChanged: {prop}", e.PropertyName);
             _logger.LogInformation("Gallo: {gallo}", GalloSwitch);
         }
+
+        base.OnPropertyChanged(e);
     }
 }

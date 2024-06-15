@@ -5,6 +5,8 @@
 /// </summary>
 public interface IAnnouncer : IDisposable
 {
+    event EventHandler<CaptionChangedEventArgs> CaptionChanged;
+
     /// <summary>
     /// Announces current time.
     /// </summary>

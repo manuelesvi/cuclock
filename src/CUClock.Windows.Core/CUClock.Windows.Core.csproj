@@ -38,6 +38,9 @@
 	  <None Update="WAVs\horn.wav">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	  <None Update="WAVs\pajaro_loco.wav">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="WAVs\pistol.wav">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>

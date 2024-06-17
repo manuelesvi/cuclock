@@ -50,8 +50,8 @@ public class CaptionChangedEventArgs(string text) : EventArgs
 ///  </example>
 public class Announcer : BackgroundService, IAnnouncer
 {
-    private const int Default_Duration =  41 * 100; // 41 seconds
-    private const int Bells_Duration   = 150 * 100; // 150 seconds
+    private const int Default_Duration =  41 * 100; // 4.1 seconds
+    private const int Bells_Duration   = 150 * 100; // 15 seconds
     private const int BellsAfter_Delay = 370 * 100; // delay after 1st melody
 
     /// <summary>
@@ -100,7 +100,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private delegate void Schedule(
         CancellationToken cancellationToken);
 
-    public event EventHandler<CaptionChangedEventArgs> CaptionChanged;
+    public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -122,7 +122,8 @@ public class Announcer : BackgroundService, IAnnouncer
         _cucu,
         _cucaracha,
         _pistol,
-        _gallo;
+        _gallo,
+        _pajaro_loco;
 
     private SoundPlayer? _playing;
     private readonly string _wavDir = string.Empty;
@@ -170,6 +171,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _cucaracha = new SoundPlayer(_wavDir + "\\horn.wav");
         _pistol = new SoundPlayer(_wavDir + "\\pistol.wav");
         _gallo = new SoundPlayer();
+        _pajaro_loco = new SoundPlayer(_wavDir + "\\pajaro_loco.wav");
 
         Trace.Assert(Directory.Exists(dir)
             && Directory.Exists(_wavDir), "dir not found");
@@ -455,7 +457,7 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora), hora,
             hora != 1 ? hora : "una");
-        await Announce(txt, _bells, stoppingToken, Bells_Duration);
+        await Announce(txt, _pajaro_loco, stoppingToken, Default_Duration);
         await Task.Delay(BellsAfter_Delay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }

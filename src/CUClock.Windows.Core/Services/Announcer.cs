@@ -14,14 +14,6 @@ using Microsoft.Extensions.Logging;
 
 namespace CUClock.Windows.Core;
 
-public class CaptionChangedEventArgs(string text) : EventArgs
-{
-    public string Text
-    {
-        get; init;
-    } = text;
-}
-
 #nullable enable
 
 /// <summary>

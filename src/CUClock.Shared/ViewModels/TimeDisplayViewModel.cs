@@ -7,9 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Shared.ViewModels;
 
 /// <summary>
-/// Default constructor.
+/// ViewModel for TimeDisplay view.
 /// </summary>
-/// <param name="announcer"></param>
 public partial class TimeDisplayViewModel : BaseViewModel
 {
     private readonly IAnnouncer _announcer;

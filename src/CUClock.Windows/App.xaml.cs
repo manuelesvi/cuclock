@@ -9,6 +9,7 @@ using CUClock.Windows.Models;
 using CUClock.Windows.Notifications;
 using CUClock.Windows.Services;
 using CUClock.Windows.ViewModels;
+using CUClock.Windows.Core.ViewModels;
 using CUClock.Windows.Views;
 
 using Microsoft.Extensions.DependencyInjection;

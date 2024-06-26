@@ -2,10 +2,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CUClock.Windows.Core.Contracts.Services;
-using CUClock.Windows.Core.ViewModels;
 using Microsoft.Extensions.Logging;
 
-namespace CUClock.Windows.ViewModels;
+namespace CUClock.Windows.Core.ViewModels;
 
 /// <summary>
 /// Default constructor.
@@ -21,7 +20,10 @@ public partial class TimeDisplayViewModel : BaseViewModel
     
     [ObservableProperty]
     private bool _galloSwitch;
-        
+
+    [ObservableProperty]
+    private bool _aphorismSwitch;
+
     public TimeDisplayViewModel(IAnnouncer announcer,
         ILogger<TimeDisplayViewModel> logger)
     {

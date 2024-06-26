@@ -1,5 +1,5 @@
 ﻿using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.ViewModels;
+using CUClock.Windows.Core.ViewModels;
 
 using Microsoft.UI.Xaml;
 

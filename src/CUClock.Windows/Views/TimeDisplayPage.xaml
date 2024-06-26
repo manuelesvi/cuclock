@@ -5,8 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid x:Name="ContentArea" Padding="0,0,0,20"
-          ColumnSpacing="10">
+    <Grid x:Name="ContentArea" Padding="0,0,0,20" ColumnSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -32,18 +31,22 @@
 
         <ToggleSwitch x:Name="msToggle"
                       Grid.Row="2" Grid.ColumnSpan="2"
-                      OffContent="Sin milisegundos"
-                      OnContent="Con milisegundos"
+                      OffContent="Sin milisegundos" OnContent="Con milisegundos"
                       IsOn="{x:Bind ViewModel.MillisecondSwitch}" />
 
         <ToggleSwitch x:Name="galloToggle"
-                      Grid.Row="3" Grid.ColumnSpan="2"
-                      OffContent="Sin gallo"
-                      OnContent="Con gallo"
+                      Grid.Row="3" Grid.Column="0"
+                      OffContent="Sin gallo" OnContent="Con gallo"
                       IsOn="{x:Bind ViewModel.GalloSwitch}" />
+
+        <ToggleSwitch x:Name="phraseToggle"
+                      Grid.Row="3" Grid.Column="1"
+                      OffContent="Sin aforismo" OnContent="Con aforismo"
+                      IsOn="{x:Bind ViewModel.AphorismSwitch}" />
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                     Grid.Row="4" Grid.ColumnSpan="2" Spacing="7">
+
             <Button x:Uid="TimeDisplayPage_AnnounceBtn"
                 HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Announce}" />
@@ -55,6 +58,7 @@
             <Button x:Uid="TimeDisplayPage_SilenceBtn"
                 HorizontalAlignment="Stretch"
                 Command="{x:Bind ViewModel.Silence}" />
+
         </StackPanel>
     </Grid>
 </Page>

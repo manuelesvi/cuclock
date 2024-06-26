@@ -126,7 +126,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly SpeechSynthesizer _synth = new();
 
     /// <summary>
-    /// A <see cref="List{VoiceInfo}"/> of installed voices in 
+    /// A <see cref="List{VoiceInfo}"/> of installed voices in
     /// <see cref="Spanish">.
     /// </summary>
     private readonly List<VoiceInfo> _voices = [];
@@ -134,8 +134,9 @@ public class Announcer : BackgroundService, IAnnouncer
     private CancellationTokenSource? _silence;
 
     /// <summary>
-    /// Main constructor.
+    /// Initializes an <see cref="Announcer"/>.
     /// </summary>
+    /// <param name="phraseProvider">Aphorisms provider.</param>
     /// <param name="logger"></param>
     public Announcer(
         IPhraseProvider phraseProvider,
@@ -175,7 +176,7 @@ public class Announcer : BackgroundService, IAnnouncer
             { CronExpression.Parse("30 * * * SUN-SAT"), YMedia },
             { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
-        
+
         _synth.SpeakProgress += (_, e) => OnCaptionChanged(e.Text);
         _synth.SpeakCompleted += (_, _) => OnCaptionChanged(string.Empty);
 
@@ -215,7 +216,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
     /// that holds
     /// <see cref="Schedule"/> tasks scheduled
-    /// to execute at 0, 15, 30 & 45 minutes each hour (MON-SUN).
+    /// to run at 0, 15, 30 & 45 minutes each hour (MON-SUN).
     /// </summary>
     private Dictionary<CronExpression, Schedule> Schedules
     {
@@ -263,7 +264,7 @@ public class Announcer : BackgroundService, IAnnouncer
 
                 _logger.LogInformation("@{now} - Sleeping for {time} ms.",
                     DateTime.Now.TimeOfDay, gallo.duration * 100);
-                
+
                 await Task.Delay(gallo.duration * 100);
 
                 _logger.LogInformation("@{now} Woke up!", DateTime.Now.TimeOfDay);
@@ -316,14 +317,14 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         _silence = new CancellationTokenSource();
         var now = DateTime.Now;
-        var hora = now.Hour > 12 ? now.Hour - 12: now.Hour;
+        var hora = now.Hour > 12 ? now.Hour - 12 : now.Hour;
         var txt = string.Format(now.Minute > HalfHour
             ? Faltan(sayMilliseconds)
-            : now.Hour >= 1 && now.Hour < 12 
+            : now.Hour >= 1 && now.Hour < 12
             ? "{0} de la mañana, {1}"
-            : now.Hour == 12 
+            : now.Hour == 12
             ? "doce del medio día, {1}"
-            : now.Hour >= 13 
+            : now.Hour >= 13
             ? "{0} de la {2}, {1}"
             : "doce de la noche, ", // now.Hour == 0
             string.Format("{0} {1}", PrefijoHora(hora), hora),
@@ -487,24 +488,27 @@ public class Announcer : BackgroundService, IAnnouncer
         _logger.LogTrace("Announce began execution...");
         _logger.LogInformation(text);
         _playing = sound;
-        _playing?.Play();
-        if (sound is not null)
+        await Task.Run(async () =>
         {
-            await Task.Delay(pauseTimeMilliseconds, stoppingToken);
-        }
-        SelectVoice();
-        _logger.LogTrace("Calling Speak() on speech synthesizer");
-        try
-        {
-            _synth.Speak(text);
-        }
-        catch (OperationCanceledException e)
-        {
-            _logger.LogError(e, "TTS operation was canceled.");
-//#if DEBUG
-//            Debugger.Break();
-//#endif
-        }
+            SelectVoice();
+            _playing?.Play();
+            if (sound is not null)
+            {
+                await Task.Delay(pauseTimeMilliseconds, stoppingToken);
+            }
+            _logger.LogTrace("Calling Speak() on speech synthesizer");
+            try
+            {
+                _synth.Speak(text);
+            }
+            catch (OperationCanceledException e)
+            {
+                _logger.LogError(e, "TTS operation was canceled.");
+#if DEBUG
+                Debugger.Break();
+#endif
+            }
+        });
         _logger.LogTrace("Announce execution finished.");
     }
 
@@ -524,7 +528,7 @@ public class Announcer : BackgroundService, IAnnouncer
         => CaptionChanged?.Invoke(this, new CaptionChangedEventArgs(text));
 
     private void SelectVoice() => _synth.SelectVoice(_voices[
-            _random.Next(0, _voices.Count) // selects a random voice
+        _random.Next(0, _voices.Count) // selects a random voice
     ].Name);
 
     public override void Dispose()

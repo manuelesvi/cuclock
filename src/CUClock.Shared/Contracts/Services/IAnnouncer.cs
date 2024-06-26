@@ -1,4 +1,4 @@
-﻿namespace CUClock.Windows.Core.Contracts.Services;
+﻿namespace CUClock.Shared.Contracts.Services;
 
 /// <summary>
 /// An interface describing a time announcer.

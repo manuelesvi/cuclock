@@ -5,7 +5,7 @@ using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Helpers;
-using CUClock.Windows.Core.ViewModels;
+using CUClock.Shared.ViewModels;
 using Microsoft.UI.Xaml.Controls;
 
 namespace CUClock.Windows.Views;

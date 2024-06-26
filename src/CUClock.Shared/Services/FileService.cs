@@ -1,10 +1,10 @@
 ﻿using System.Text;
 
-using CUClock.Windows.Core.Contracts.Services;
+using CUClock.Shared.Contracts.Services;
 
 using Newtonsoft.Json;
 
-namespace CUClock.Windows.Core.Services;
+namespace CUClock.Shared.Services;
 
 public class FileService : IFileService
 {

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace CUClock.Windows.Core.Helpers;
+namespace CUClock.Shared.Helpers;
 
 public static class Json
 {

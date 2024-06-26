@@ -6,13 +6,13 @@ using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.Messaging;
 using Cronos;
-using CUClock.Windows.Core.Contracts.Services;
+using CUClock.Shared.Contracts.Services;
 using Humanizer;
 using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace CUClock.Windows.Core;
+namespace CUClock.Shared;
 
 #nullable enable
 

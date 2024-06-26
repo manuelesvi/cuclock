@@ -1,6 +1,6 @@
 ﻿using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core.Contracts.Services;
-using CUClock.Windows.Core.Helpers;
+using CUClock.Shared.Contracts.Services;
+using CUClock.Shared.Helpers;
 using CUClock.Windows.Helpers;
 using CUClock.Windows.Models;
 

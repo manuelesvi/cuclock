@@ -1,5 +1,5 @@
 using System.Globalization;
-using CUClock.Windows.Core;
+using CUClock.Shared;
 
 var esMX = new CultureInfo("es-MX");
 CultureInfo.CurrentCulture = esMX;

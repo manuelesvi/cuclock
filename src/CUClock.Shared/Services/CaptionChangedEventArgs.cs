@@ -1,4 +1,4 @@
-﻿namespace CUClock.Windows.Core;
+﻿namespace CUClock.Shared;
 
 public class CaptionChangedEventArgs(string text) : EventArgs
 {

@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CUClock.Windows.Core.Contracts.Services;
+using CUClock.Shared.Contracts.Services;
 using Microsoft.Extensions.Logging;
 
-namespace CUClock.Windows.Core.ViewModels;
+namespace CUClock.Shared.ViewModels;
 
 /// <summary>
 /// Default constructor.
@@ -32,6 +32,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
 
         MillisecondSwitch = true;
         GalloSwitch = true;
+        AphorismSwitch = true;
         
         Silence = new RelayCommand(() => _announcer.Silence());
         SpeakPhrase = new RelayCommand(() => announcer.SpeakPhrase(GalloSwitch));

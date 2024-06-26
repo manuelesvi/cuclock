@@ -1,4 +1,4 @@
-﻿using CUClock.Windows.Core.Helpers;
+﻿using CUClock.Shared.Helpers;
 
 using Windows.Storage;
 using Windows.Storage.Streams;

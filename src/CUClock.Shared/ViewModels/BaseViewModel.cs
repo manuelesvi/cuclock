@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace CUClock.Windows.Core.ViewModels;
+namespace CUClock.Shared.ViewModels;
 
 /// <summary>
 /// An intermediary between the view and the model.

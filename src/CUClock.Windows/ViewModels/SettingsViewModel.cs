@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core.ViewModels;
+using CUClock.Shared.ViewModels;
 using CUClock.Windows.Helpers;
 
 using Microsoft.UI.Xaml;

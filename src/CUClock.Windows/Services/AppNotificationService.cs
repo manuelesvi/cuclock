@@ -2,7 +2,7 @@
 using System.Web;
 
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core.Contracts.Services;
+using CUClock.Shared.Contracts.Services;
 using Microsoft.Windows.AppNotifications;
 
 namespace CUClock.Windows.Notifications;

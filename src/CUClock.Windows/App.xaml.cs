@@ -2,14 +2,14 @@
 using Aphorismus.Shared.Services;
 using CUClock.Windows.Activation;
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core;
-using CUClock.Windows.Core.Contracts.Services;
-using CUClock.Windows.Core.Services;
+using CUClock.Shared;
+using CUClock.Shared.Contracts.Services;
+using CUClock.Shared.Services;
 using CUClock.Windows.Models;
 using CUClock.Windows.Notifications;
 using CUClock.Windows.Services;
 using CUClock.Windows.ViewModels;
-using CUClock.Windows.Core.ViewModels;
+using CUClock.Shared.ViewModels;
 using CUClock.Windows.Views;
 
 using Microsoft.Extensions.DependencyInjection;

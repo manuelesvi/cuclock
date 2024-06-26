@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using CUClock.Windows.Contracts.Services;
-using CUClock.Windows.Core.ViewModels;
+using CUClock.Shared.ViewModels;
 using CUClock.Windows.ViewModels;
 using CUClock.Windows.Views;
 

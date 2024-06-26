@@ -30,19 +30,19 @@
                  VerticalAlignment="Stretch" />
 
         <ToggleSwitch x:Name="msToggle"
-                      Grid.Row="2" Grid.ColumnSpan="2"
+                      Grid.Row="2" Grid.Column="0"
                       OffContent="Sin milisegundos" OnContent="Con milisegundos"
                       IsOn="{x:Bind ViewModel.MillisecondSwitch}" />
+        
+        <ToggleSwitch x:Name="phraseToggle"
+                      Grid.Row="2" Grid.Column="1"
+                      OffContent="Sin aforismo" OnContent="Con aforismo"
+                      IsOn="{x:Bind ViewModel.AphorismSwitch}" />
 
         <ToggleSwitch x:Name="galloToggle"
                       Grid.Row="3" Grid.Column="0"
                       OffContent="Sin gallo" OnContent="Con gallo"
                       IsOn="{x:Bind ViewModel.GalloSwitch}" />
-
-        <ToggleSwitch x:Name="phraseToggle"
-                      Grid.Row="3" Grid.Column="1"
-                      OffContent="Sin aforismo" OnContent="Con aforismo"
-                      IsOn="{x:Bind ViewModel.AphorismSwitch}" />
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                     Grid.Row="4" Grid.ColumnSpan="2" Spacing="7">

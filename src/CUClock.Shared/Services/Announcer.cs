@@ -44,7 +44,7 @@ public class Announcer : BackgroundService, IAnnouncer
 {
     private const int Default_Duration = 41 * 100; // 4.1 seconds
     private const int Bells_Duration = 150 * 100; // 15 seconds
-    private const int BellsAfter_Delay = 370 * 100; // delay after 1st melody
+    private const int Bells_AfterDelay = 370 * 100; // delay after 1st melody
 
     /// <summary>
     /// Precision for minute and second.
@@ -456,7 +456,7 @@ public class Announcer : BackgroundService, IAnnouncer
             PrefijoHora(hora), hora,
             hora != 1 ? hora : "una");
         await Announce(txt, _pajaro_loco, stoppingToken, Default_Duration);
-        await Task.Delay(BellsAfter_Delay, stoppingToken);
+        await Task.Delay(Bells_AfterDelay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
 
@@ -481,7 +481,7 @@ public class Announcer : BackgroundService, IAnnouncer
             PrefijoHora(hora, conArticulo: false), hora,
             hora > 1 ? "s" : "");
         await Announce(txt, _bells, stoppingToken, Bells_Duration);
-        await Task.Delay(BellsAfter_Delay, stoppingToken);
+        await Task.Delay(Bells_AfterDelay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
 
@@ -551,5 +551,4 @@ public class Announcer : BackgroundService, IAnnouncer
         base.Dispose();
     }
 }
-
 #nullable disable

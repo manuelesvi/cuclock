@@ -72,7 +72,6 @@ public partial class TimeDisplayViewModel : BaseViewModel
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
-        _logger.LogInformation(e.PropertyName);
         if (e.PropertyName == nameof(MillisecondSwitch))
         {
             _logger.LogInformation("OnPropertyChanged: {prop}", e.PropertyName);
@@ -87,7 +86,6 @@ public partial class TimeDisplayViewModel : BaseViewModel
         {
             _announcer.EnableAphorisms = AphorismSwitch;
         }
-
         base.OnPropertyChanged(e);
     }
 }

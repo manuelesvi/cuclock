@@ -42,8 +42,8 @@ namespace CUClock.Shared;
 ///  </example>
 public class Announcer : BackgroundService, IAnnouncer
 {
-    private const int Default_Duration =  41 * 100; // 4.1 seconds
-    private const int Bells_Duration   = 150 * 100; // 15 seconds
+    private const int Default_Duration = 41 * 100; // 4.1 seconds
+    private const int Bells_Duration = 150 * 100; // 15 seconds
     private const int BellsAfter_Delay = 370 * 100; // delay after 1st melody
 
     /// <summary>
@@ -222,6 +222,11 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         get;
     }
+
+    public bool EnableAphorisms
+    {
+        get; set;
+    } = true;
 
     public void Announce(bool sayMilliseconds = true)
     {
@@ -514,6 +519,11 @@ public class Announcer : BackgroundService, IAnnouncer
 
     private void SpeakPhrase(CancellationToken stoppingToken)
     {
+        if (!EnableAphorisms)
+        {
+            return;
+        }
+
         stoppingToken.Register(_synth.SpeakAsyncCancelAll);
         ((PhraseProvider)_phraseProvider).SendPhrase(_random);
     }

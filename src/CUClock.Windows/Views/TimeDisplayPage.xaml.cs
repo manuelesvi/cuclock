@@ -28,6 +28,7 @@ public sealed partial class TimeDisplayPage : Page
 
         msToggle.Toggled += (_, _) => ViewModel.MillisecondSwitch = msToggle.IsOn;
         galloToggle.Toggled += (_, _) => ViewModel.GalloSwitch = galloToggle.IsOn;
+        aforismoToggle.Toggled += (_, _) => ViewModel.AphorismSwitch = aforismoToggle.IsOn;
     }
 
     public TimeDisplayViewModel ViewModel

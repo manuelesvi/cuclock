@@ -33,8 +33,8 @@
                       Grid.Row="2" Grid.Column="0"
                       OffContent="Sin milisegundos" OnContent="Con milisegundos"
                       IsOn="{x:Bind ViewModel.MillisecondSwitch}" />
-        
-        <ToggleSwitch x:Name="phraseToggle"
+
+        <ToggleSwitch x:Name="aforismoToggle"
                       Grid.Row="2" Grid.Column="1"
                       OffContent="Sin aforismo" OnContent="Con aforismo"
                       IsOn="{x:Bind ViewModel.AphorismSwitch}" />

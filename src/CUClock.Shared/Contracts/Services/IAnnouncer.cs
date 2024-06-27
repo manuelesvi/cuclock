@@ -8,6 +8,15 @@ public interface IAnnouncer : IDisposable
     event EventHandler<CaptionChangedEventArgs> CaptionChanged;
 
     /// <summary>
+    /// Specifies whether an aphorism should be mentioned within
+    /// scheduled tasks.
+    /// </summary>
+    bool EnableAphorisms
+    {
+        get; set;
+    }
+
+    /// <summary>
     /// Announces current time.
     /// </summary>
     /// <param name="sayMilliseconds">

@@ -163,8 +163,8 @@
     &lt;/binding&gt;
   &lt;/visual&gt;
   &lt;actions&gt;
-    &lt;action content="Open" arguments="action=Open"/&gt;
-    &lt;action content="Silence" arguments="action=Silence"/&gt;
+    &lt;action content="Mostrar" arguments="action=Open"/&gt;
+    &lt;action content="Silencio" arguments="action=Silence"/&gt;
   &lt;/actions&gt;
 &lt;/toast&gt;</value>
     <comment>Toast notification for Phrase with Silence button</comment>

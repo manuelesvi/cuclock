@@ -178,4 +178,7 @@
   <data name="TimeDisplayPage_PhraseBtn.Content" xml:space="preserve">
     <value>Frase</value>
   </data>
+  <data name="TimeDisplayPage_RepeatBtn.Content" xml:space="preserve">
+    <value>Repetir</value>
+  </data>
 </root>

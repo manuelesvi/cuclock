@@ -1,4 +1,6 @@
-﻿namespace CUClock.Shared.Contracts.Services;
+﻿using Aphorismus.Shared.Entities;
+
+namespace CUClock.Shared.Contracts.Services;
 
 /// <summary>
 /// An interface describing a time announcer.
@@ -28,6 +30,12 @@ public interface IAnnouncer : IDisposable
     /// Speaks a random phrase (no time).
     /// </summary>
     void SpeakPhrase(bool conGallo = true);
+
+    /// <summary>
+    /// Reads aloud the <paramref name="phrase"/>.
+    /// </summary>
+    /// <param name="frase"></param>
+    void SpeakPhrase(Frase phrase);
 
     /// <summary>
     /// Silences audio output.

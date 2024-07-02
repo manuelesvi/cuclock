@@ -48,16 +48,16 @@
                     Grid.Row="4" Grid.ColumnSpan="2" Spacing="7">
 
             <Button x:Uid="TimeDisplayPage_AnnounceBtn"
-                HorizontalAlignment="Stretch"
-                Command="{x:Bind ViewModel.Announce}" />
+                    Command="{x:Bind ViewModel.Announce}" />
 
             <Button x:Uid="TimeDisplayPage_PhraseBtn"
-                HorizontalAlignment="Stretch"
-                Command="{x:Bind ViewModel.SpeakPhrase}" />
+                    Command="{x:Bind ViewModel.SpeakPhrase}" />
+
+            <Button x:Uid="TimeDisplayPage_RepeatBtn"
+                    Command="{x:Bind ViewModel.Repeat}" />
 
             <Button x:Uid="TimeDisplayPage_SilenceBtn"
-                HorizontalAlignment="Stretch"
-                Command="{x:Bind ViewModel.Silence}" />
+                    Command="{x:Bind ViewModel.Silence}" />
 
         </StackPanel>
     </Grid>

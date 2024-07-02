@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Media;
 using System.Speech.Synthesis;
+using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.Messaging;
@@ -279,6 +280,12 @@ public class Announcer : BackgroundService, IAnnouncer
             await Task.Delay(2000);
             SpeakPhrase(_silence.Token);
         });
+    }
+
+    public void SpeakPhrase(Frase frase)
+    {
+        SelectVoice();
+        _synth.SpeakAsync(frase.Texto);
     }
 
     protected async override Task ExecuteAsync(

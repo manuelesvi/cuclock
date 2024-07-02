@@ -1,6 +1,9 @@
 ﻿using System.ComponentModel;
+using Aphorismus.Shared.Entities;
+using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Shared.Contracts.Services;
 using Microsoft.Extensions.Logging;
 
@@ -23,6 +26,9 @@ public partial class TimeDisplayViewModel : BaseViewModel
     [ObservableProperty]
     private bool _aphorismSwitch;
 
+    [ObservableProperty]
+    private Frase _frase;
+
     public TimeDisplayViewModel(IAnnouncer announcer,
         ILogger<TimeDisplayViewModel> logger)
     {
@@ -35,12 +41,21 @@ public partial class TimeDisplayViewModel : BaseViewModel
         
         Silence = new RelayCommand(() => _announcer.Silence());
         SpeakPhrase = new RelayCommand(() => announcer.SpeakPhrase(GalloSwitch));
+        Repeat = new RelayCommand(() => announcer.SpeakPhrase(Frase));
         Caption = string.Empty;
         _announcer.CaptionChanged += (_, e) =>
         {
             Caption = e.Text;
             OnPropertyChanged(nameof(Caption));
         };
+
+        if (!WeakReferenceMessenger.Default
+            .IsRegistered<PhrasePickedMessage>(this))
+        {
+            WeakReferenceMessenger.Default.Register(this,
+                (MessageHandler<object, PhrasePickedMessage>)(
+                (_, message) => Frase = message.Value));
+        }
     }
 
     /// <summary>
@@ -61,6 +76,14 @@ public partial class TimeDisplayViewModel : BaseViewModel
     /// SpeakPhrase command.
     /// </summary>
     public IRelayCommand SpeakPhrase
+    {
+        get;
+    }
+
+    /// <summary>
+    /// Repeats the last phrase.
+    /// </summary>
+    public IRelayCommand Repeat
     {
         get;
     }

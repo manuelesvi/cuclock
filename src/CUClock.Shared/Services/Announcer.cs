@@ -262,16 +262,16 @@ public class Announcer : BackgroundService, IAnnouncer
                     ("rooster1.wav", 30), // 3 segundos
                     ("rooster2.wav", 35)]; // 3.5s
 
-                var gallo = gallos[_random.Next(0, 2)];
-                _gallo.SoundLocation = _wavDir + "\\" + gallo.file;
+                var (file, duration) = gallos[_random.Next(0, 2)];
+                _gallo.SoundLocation = _wavDir + "\\" + file;
                 _gallo.Load();
                 _playing = _gallo;
                 _gallo.Play();
 
                 _logger.LogInformation("@{now} - Sleeping for {time} ms.",
-                    DateTime.Now.TimeOfDay, gallo.duration * 100);
+                    DateTime.Now.TimeOfDay, duration * 100);
 
-                await Task.Delay(gallo.duration * 100);
+                await Task.Delay(duration * 100);
 
                 _logger.LogInformation("@{now} Woke up!", DateTime.Now.TimeOfDay);
             }
@@ -321,7 +321,7 @@ public class Announcer : BackgroundService, IAnnouncer
             ? "Son"
             : "Es";
 
-    private static object SufijoHora(int hora)
+    private static string SufijoHora(int hora)
         => hora > 1 ? "s" : "";
 
     private async Task SayCurrentTime(bool sayMilliseconds = true,
@@ -460,7 +460,7 @@ public class Announcer : BackgroundService, IAnnouncer
             ? DateTime.Now.TimeOfDay.Hours
             : DateTime.Now.TimeOfDay.Hours - 12;
         var txt = string.Format("{0} {1} y cuarto",
-            PrefijoHora(hora), hora,
+            PrefijoHora(hora),
             hora != 1 ? hora : "una");
         await Announce(txt, _pajaro_loco, stoppingToken, Default_Duration);
         await Task.Delay(Bells_AfterDelay, stoppingToken);

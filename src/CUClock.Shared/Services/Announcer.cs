@@ -463,7 +463,6 @@ public class Announcer : BackgroundService, IAnnouncer
             PrefijoHora(hora),
             hora != 1 ? hora : "una");
         await Announce(txt, _pajaro_loco, stoppingToken, Default_Duration);
-        await Task.Delay(Bells_AfterDelay, stoppingToken);
         SpeakPhrase(stoppingToken);
     }
 

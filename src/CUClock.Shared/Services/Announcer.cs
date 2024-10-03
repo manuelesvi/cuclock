@@ -132,6 +132,8 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private readonly List<VoiceInfo> _voices = [];
 
+    private readonly Stack<Frase> _phrases = new();
+
     private CancellationTokenSource? _silence;
 
     /// <summary>
@@ -309,11 +311,10 @@ public class Announcer : BackgroundService, IAnnouncer
 
         Trace.Assert(tasks.Count == FiveTasks,
             $"Invalid count, expected {FiveTasks}");
-        await Task.WhenAll([.. tasks]); // done
+        await Task.WhenAll(tasks); // done
     }
 
-    private static string PrefijoHora(int hora,
-        bool conArticulo = true) => conArticulo
+    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
         ? hora > 1
             ? "Son las"
             : "Es la"
@@ -323,41 +324,6 @@ public class Announcer : BackgroundService, IAnnouncer
 
     private static string SufijoHora(int hora)
         => hora > 1 ? "s" : "";
-
-    private async Task SayCurrentTime(bool sayMilliseconds = true,
-        CancellationToken? stoppingToken = null)
-    {
-        _silence = new CancellationTokenSource();
-        var now = DateTime.Now;
-        var hora = now.Hour > 12 ? now.Hour - 12 : now.Hour;
-        var txt = string.Format(now.Minute > HalfHour
-            ? Faltan(sayMilliseconds)
-            : now.Hour >= 1 && now.Hour < 12
-            ? "{0} de la mañana, {1}"
-            : now.Hour == 12
-            ? "doce del medio día, {1}"
-            : now.Hour >= 13
-            ? "{0} de la {2}, {1}"
-            : "doce de la noche, ", // now.Hour == 0
-            string.Format("{0} {1}", PrefijoHora(hora), hora),
-            sayMilliseconds ? now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour))
-                .Humanize(
-                    maxUnit: TimeUnit.Minute,
-                    minUnit: TimeUnit.Millisecond,
-                    culture: _mxCulture,
-                    precision: Precision_Millisecond)
-            : now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour)).Humanize(
-                maxUnit: TimeUnit.Minute,
-                minUnit: TimeUnit.Second,
-                culture: _mxCulture,
-                precision: Precision_Second),
-            now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
-
-        await Announce(txt, _cucaracha,
-            stoppingToken ?? _silence.Token);
-
-        SpeakPhrase(stoppingToken ?? _silence.Token);
-    }
 
     private static string Faltan(
         bool saySecondsAndMilliseconds = false)
@@ -420,6 +386,41 @@ public class Announcer : BackgroundService, IAnnouncer
                 ?? throw new NullReferenceException();
             timeToNext = next - utcNow;
         }
+    }
+
+    private async Task SayCurrentTime(bool sayMilliseconds = true,
+        CancellationToken? stoppingToken = null)
+    {
+        _silence = new CancellationTokenSource();
+        var now = DateTime.Now;
+        var hora = now.Hour > 12 ? now.Hour - 12 : now.Hour;
+        var txt = string.Format(now.Minute > HalfHour
+            ? Faltan(sayMilliseconds)
+            : now.Hour >= 1 && now.Hour < 12
+            ? "{0} de la mañana, {1}"
+            : now.Hour == 12
+            ? "doce del medio día, {1}"
+            : now.Hour >= 13
+            ? "{0} de la {2}, {1}"
+            : "doce de la noche, ", // now.Hour == 0
+            string.Format("{0} {1}", PrefijoHora(hora), hora),
+            sayMilliseconds ? now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour))
+                .Humanize(
+                    maxUnit: TimeUnit.Minute,
+                    minUnit: TimeUnit.Millisecond,
+                    culture: _mxCulture,
+                    precision: Precision_Millisecond)
+            : now.TimeOfDay.Add(TimeSpan.FromHours(-1 * now.Hour)).Humanize(
+                maxUnit: TimeUnit.Minute,
+                minUnit: TimeUnit.Second,
+                culture: _mxCulture,
+                precision: Precision_Second),
+            now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
+
+        await Announce(txt, _cucaracha,
+            stoppingToken ?? _silence.Token);
+
+        SpeakPhrase(stoppingToken ?? _silence.Token);
     }
 
     private async void EnPunto(CancellationToken stoppingToken)
@@ -533,10 +534,11 @@ public class Announcer : BackgroundService, IAnnouncer
         stoppingToken.Register(_synth.SpeakAsyncCancelAll);
         ((PhraseProvider)_phraseProvider).SendPhrase(_random);
     }
-
+    
     private void ProcessMessage(PhrasePickedMessage message)
     {
         SelectVoice();
+        _phrases.Push(message.Value);
         _synth.SpeakAsync(message.Value.Texto);
     }
 

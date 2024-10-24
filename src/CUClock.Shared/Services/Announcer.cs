@@ -119,7 +119,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _pajaro_loco;
 
     private SoundPlayer? _playing;
-    private readonly string _wavDir = string.Empty;
+    private readonly string _wavDir;
 
     /// <summary>
     /// TTS synth (Windows only).
@@ -132,7 +132,8 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private readonly List<VoiceInfo> _voices = [];
 
-    private readonly Stack<Frase> _phrases = new();
+    private readonly Stack<Frase> _previous = new();
+    private readonly Stack<Frase> _next = new();
 
     private CancellationTokenSource? _silence;
 
@@ -231,6 +232,10 @@ public class Announcer : BackgroundService, IAnnouncer
         get; set;
     } = true;
 
+    public int PreviousCount => _previous.Count;
+
+    public int NextCount => _next.Count;
+
     public void Announce(bool sayMilliseconds = true)
     {
         _ = Task.Run(async () =>
@@ -288,6 +293,28 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         SelectVoice();
         _synth.SpeakAsync(frase.Texto);
+    }
+
+    public void Previous()
+    {
+        if (_previous.Count == 0)
+        {
+            return;
+        }
+        var f = _previous.Pop();
+        _next.Push(f);
+        SendMessage(f);
+    }
+
+    public void Next()
+    {
+        if (_next.Count == 0)
+        {
+            return;
+        }
+        var f = _next.Pop();
+        _previous.Push(f);
+        SendMessage(f);
     }
 
     protected async override Task ExecuteAsync(
@@ -532,13 +559,30 @@ public class Announcer : BackgroundService, IAnnouncer
         }
 
         stoppingToken.Register(_synth.SpeakAsyncCancelAll);
-        ((PhraseProvider)_phraseProvider).SendPhrase(_random);
+
+        var next = _next.ToArray();
+        _next.Clear();
+        foreach (var item in next)
+        {
+            _previous.Push(item);
+        }
+        
+        var f = ((PhraseProvider)_phraseProvider).GetRandomPhrase(_random);
+        _previous.Push(f);
+        SendMessage(f);
     }
-    
+
+    private void SendMessage(Frase f)
+    {
+        // sends chosen phrase
+        WeakReferenceMessenger.Default
+            .Send(new PhrasePickedMessage(f));
+        _logger.LogInformation("PhrasePickedMessage sent.");
+    }
+
     private void ProcessMessage(PhrasePickedMessage message)
     {
         SelectVoice();
-        _phrases.Push(message.Value);
         _synth.SpeakAsync(message.Value.Texto);
     }
 
@@ -551,6 +595,8 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public override void Dispose()
     {
+        _previous.Clear();
+        _next.Clear();
         _bells?.Dispose();
         _cucaracha?.Dispose();
         _cucu?.Dispose();

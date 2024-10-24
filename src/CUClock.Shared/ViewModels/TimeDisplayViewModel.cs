@@ -16,10 +16,10 @@ public partial class TimeDisplayViewModel : BaseViewModel
 {
     private readonly IAnnouncer _announcer;
     private readonly ILogger<TimeDisplayViewModel> _logger;
-    
+
     [ObservableProperty]
     private bool _millisecondSwitch;
-    
+
     [ObservableProperty]
     private bool _galloSwitch;
 
@@ -28,6 +28,12 @@ public partial class TimeDisplayViewModel : BaseViewModel
 
     [ObservableProperty]
     private Frase _frase;
+
+    [ObservableProperty]
+    private string _anteriorText;
+
+    [ObservableProperty]
+    private string _siguienteText;
 
     public TimeDisplayViewModel(IAnnouncer announcer,
         ILogger<TimeDisplayViewModel> logger)
@@ -38,10 +44,26 @@ public partial class TimeDisplayViewModel : BaseViewModel
         MillisecondSwitch = true;
         GalloSwitch = true;
         AphorismSwitch = true;
-        
+        UpdateTexts();
         Silence = new RelayCommand(() => _announcer.Silence());
-        SpeakPhrase = new RelayCommand(() => announcer.SpeakPhrase(GalloSwitch));
-        Repeat = new RelayCommand(() => announcer.SpeakPhrase(Frase));
+        SpeakPhrase = new RelayCommand(() =>
+        {
+            _announcer.SpeakPhrase(GalloSwitch);
+            UpdateTexts();
+        });
+        Previous = new RelayCommand(() =>
+        {
+            _announcer.Previous();
+            UpdateTexts();
+        }, () => _announcer.PreviousCount > 0);
+        Next = new RelayCommand(() =>
+        {
+            _announcer.Next();
+            UpdateTexts();
+        }, () => _announcer.NextCount > 0);
+
+        Repeat = new RelayCommand(() => _announcer.SpeakPhrase(Frase));
+
         Caption = string.Empty;
         _announcer.CaptionChanged += (_, e) =>
         {
@@ -56,6 +78,12 @@ public partial class TimeDisplayViewModel : BaseViewModel
                 (MessageHandler<object, PhrasePickedMessage>)(
                 (_, message) => Frase = message.Value));
         }
+    }
+
+    private void UpdateTexts()
+    {
+        AnteriorText = string.Format("Anterior ({0})", _announcer.PreviousCount);
+        SiguienteText = string.Format("Siguiente ({0})", _announcer.NextCount);
     }
 
     /// <summary>
@@ -81,13 +109,32 @@ public partial class TimeDisplayViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Repeats the last phrase.
+    /// Repeats current phrase.
     /// </summary>
     public IRelayCommand Repeat
     {
         get;
     }
 
+    /// <summary>
+    /// Goes back to the previous phrase.
+    /// </summary>
+    public IRelayCommand Previous
+    {
+        get;
+    }
+
+    /// <summary>
+    /// Moves to the next phrase.
+    /// </summary>
+    public IRelayCommand Next
+    {
+        get;
+    }
+
+    /// <summary>
+    /// Text that is being spoken by TTS.
+    /// </summary>
     public string Caption
     {
         get; set;

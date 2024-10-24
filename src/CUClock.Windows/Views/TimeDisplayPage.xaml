@@ -47,8 +47,15 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                     Grid.Row="4" Grid.ColumnSpan="2" Spacing="7">
 
+            <Button x:Uid="TimeDisplayPage_SilenceBtn"
+                    Command="{x:Bind ViewModel.Silence}" />
+
             <Button x:Uid="TimeDisplayPage_AnnounceBtn"
                     Command="{x:Bind ViewModel.Announce}" />
+
+            <Button x:Uid="TimeDisplayPage_PreviousBtn"
+                    Command="{x:Bind ViewModel.Previous}"
+                    Content="{x:Bind ViewModel.AnteriorText}"/>
 
             <Button x:Uid="TimeDisplayPage_PhraseBtn"
                     Command="{x:Bind ViewModel.SpeakPhrase}" />
@@ -56,8 +63,9 @@
             <Button x:Uid="TimeDisplayPage_RepeatBtn"
                     Command="{x:Bind ViewModel.Repeat}" />
 
-            <Button x:Uid="TimeDisplayPage_SilenceBtn"
-                    Command="{x:Bind ViewModel.Silence}" />
+            <Button x:Uid="TimeDisplayPage_NextBtn"
+                    Command="{x:Bind ViewModel.Next}"
+                    Content="{x:Bind ViewModel.SiguienteText}" />
 
         </StackPanel>
     </Grid>

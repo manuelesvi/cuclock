@@ -181,4 +181,10 @@
   <data name="TimeDisplayPage_RepeatBtn.Content" xml:space="preserve">
     <value>Repetir</value>
   </data>
+  <data name="TimeDisplayPage_NextBtn.Content" xml:space="preserve">
+    <value>Siguiente</value>
+  </data>
+  <data name="TimeDisplayPage_PreviousBtn.Content" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
 </root>

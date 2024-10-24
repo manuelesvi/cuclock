@@ -19,6 +19,22 @@ public interface IAnnouncer : IDisposable
     }
 
     /// <summary>
+    /// Count of Phrases in previous stack
+    /// </summary>
+    int PreviousCount
+    {
+        get;
+    }
+
+    /// <summary>
+    /// Count of Phrases in next stack
+    /// </summary>
+    int NextCount
+    {
+        get;
+    }
+
+    /// <summary>
     /// Announces current time.
     /// </summary>
     /// <param name="sayMilliseconds">
@@ -41,4 +57,8 @@ public interface IAnnouncer : IDisposable
     /// Silences audio output.
     /// </summary>
     void Silence();
+
+    void Previous();
+
+    void Next();
 }

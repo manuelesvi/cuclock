@@ -34,6 +34,11 @@ public interface IAnnouncer : IDisposable
         get;
     }
 
+    CancellationToken SilenceToken
+    {
+        get;
+    }
+
     /// <summary>
     /// Announces current time.
     /// </summary>

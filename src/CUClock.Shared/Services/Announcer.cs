@@ -259,6 +259,8 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public int NextCount => _next.Count;
 
+    public CancellationToken SilenceToken => _silence?.Token ?? default;
+
     public void Announce(bool sayMilliseconds = true)
     {
         _ = Task.Run(async () =>

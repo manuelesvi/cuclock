@@ -240,14 +240,7 @@ public class Announcer : BackgroundService, IAnnouncer
     public Schedule GetScheduleFor(string cronExpression)
     {
         var minutes = int.Parse(cronExpression.Split(' ')[1]);
-        return minutes switch
-        {
-            0 => EnPunto,
-            15 => CuartoDeHora,
-            30 => YMedia,
-            45 => CuartoPara,
-            _ => throw new NotSupportedException(),
-        };
+        return GetSchedule(minutes);
     }
 
     public bool EnableAphorisms
@@ -476,6 +469,15 @@ public class Announcer : BackgroundService, IAnnouncer
         SpeakPhrase(stoppingToken ?? _silence.Token);
     }
 
+    private Schedule GetSchedule(int minutes) => minutes switch
+    {
+        0 => EnPunto,
+        15 => CuartoDeHora,
+        30 => YMedia,
+        45 => CuartoPara,
+        _ => throw new NotSupportedException(),
+    };
+
     private async void EnPunto(CancellationToken stoppingToken)
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
@@ -577,6 +579,27 @@ public class Announcer : BackgroundService, IAnnouncer
         _logger.LogTrace("Announce execution finished.");
     }
 
+    private void OnCaptionChanged(string text)
+        => CaptionChanged?.Invoke(this, new CaptionChangedEventArgs(text));
+
+    private void SelectVoice() => _synth.SelectVoice(_voices[
+        _random.Next(0, _voices.Count) // selects a random voice
+    ].Name);
+
+    private void ProcessMessage(PhrasePickedMessage message)
+    {
+        SelectVoice();
+        _synth.SpeakAsync(message.Value.Texto);
+    }
+
+    private void SendMessage(Frase f)
+    {
+        // sends chosen phrase
+        WeakReferenceMessenger.Default
+            .Send(new PhrasePickedMessage(f));
+        _logger.LogInformation("PhrasePickedMessage sent.");
+    }
+    
     private void SpeakPhrase(CancellationToken stoppingToken)
     {
         if (!EnableAphorisms)
@@ -597,27 +620,6 @@ public class Announcer : BackgroundService, IAnnouncer
         _previous.Push(f);
         SendMessage(f);
     }
-
-    private void SendMessage(Frase f)
-    {
-        // sends chosen phrase
-        WeakReferenceMessenger.Default
-            .Send(new PhrasePickedMessage(f));
-        _logger.LogInformation("PhrasePickedMessage sent.");
-    }
-
-    private void ProcessMessage(PhrasePickedMessage message)
-    {
-        SelectVoice();
-        _synth.SpeakAsync(message.Value.Texto);
-    }
-
-    private void OnCaptionChanged(string text)
-        => CaptionChanged?.Invoke(this, new CaptionChangedEventArgs(text));
-
-    private void SelectVoice() => _synth.SelectVoice(_voices[
-        _random.Next(0, _voices.Count) // selects a random voice
-    ].Name);
 
     public override void Dispose()
     {

@@ -77,7 +77,6 @@ public class Scheduler : IScheduler
                 var jobDetail = JobBuilder.Create<AnnounceJob>()
                     .WithIdentity($"announceJob{++jobCount}", "group1")
                     .UsingJobData(AnnounceJob.CRON_KEY, expression)
-                    // .("delegate", entry.Value)
                     .Build();
 
                 var trigger = TriggerBuilder.Create()

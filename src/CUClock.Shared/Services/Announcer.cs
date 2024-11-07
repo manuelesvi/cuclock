@@ -90,7 +90,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// <param name="cancellationToken">
     /// Stop or cancels the executing task.
     /// </param>
-    private delegate void Schedule(
+    public delegate void Schedule(
         CancellationToken cancellationToken);
 
     public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
@@ -103,6 +103,7 @@ public class Announcer : BackgroundService, IAnnouncer
 
     private readonly Random _random = new();
     private readonly IPhraseProvider _phraseProvider;
+    private readonly IScheduler _scheduler;
 
     /// <summary>
     /// Logging.
@@ -144,11 +145,13 @@ public class Announcer : BackgroundService, IAnnouncer
     /// <param name="logger"></param>
     public Announcer(
         IPhraseProvider phraseProvider,
+        IScheduler scheduler,
         ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
         _phraseProvider = phraseProvider;
+        _scheduler = scheduler;
         _logger = logger;
         var isRegistered = WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this);
@@ -212,8 +215,15 @@ public class Announcer : BackgroundService, IAnnouncer
             } // for each
         });
 
+        var startScheduler = Task.Run(async () => {
+            await _scheduler.RegisterJobs(Schedules);
+            await _scheduler.Start();
+            _logger.LogInformation("Job Scheduler started on {time}...",
+                DateTime.Now.ToLongTimeString());
+        });
+
         _ = Task.Run(async () =>
-            await Task.WhenAll(setupTTS, readVoices));
+            await Task.WhenAll(setupTTS, readVoices, startScheduler));
     } // Announcer .ctor()
 
     /// <summary>
@@ -225,6 +235,19 @@ public class Announcer : BackgroundService, IAnnouncer
     private Dictionary<CronExpression, Schedule> Schedules
     {
         get;
+    }
+
+    public Schedule GetScheduleFor(string cronExpression)
+    {
+        var minutes = int.Parse(cronExpression.Split(' ')[1]);
+        return minutes switch
+        {
+            0 => EnPunto,
+            15 => CuartoDeHora,
+            30 => YMedia,
+            45 => CuartoPara,
+            _ => throw new NotSupportedException(),
+        };
     }
 
     public bool EnableAphorisms
@@ -261,7 +284,7 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         Silence();
         _silence = new CancellationTokenSource();
-        var _ = Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             if (conGallo)
             {
@@ -403,7 +426,8 @@ public class Announcer : BackgroundService, IAnnouncer
                     minUnit: TimeUnit.Minute));
 
             // call delegate
-            Schedules[cron](stoppingToken);
+            _logger.LogInformation("Task.Delay is being replaced with Quartz Jobs, see AnnounceJob & RegisterJobs method from this project's Scheduler ...NOT Quartz!!!");
+            // Schedules[cron](stoppingToken);
 
             // sleep 1s, 100 ms
             await Task.Delay(1100, stoppingToken);

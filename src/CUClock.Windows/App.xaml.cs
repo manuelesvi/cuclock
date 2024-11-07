@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using CUClock.Shared.Helpers;
 
 namespace CUClock.Windows;
 
@@ -32,10 +33,12 @@ public partial class App : Application
         get;
     }
 
+    private static IServiceProvider ServiceProvider => (App.Current as App)!.Host.Services;
+
     public static T GetService<T>()
         where T : class
     {
-        if ((App.Current as App)!.Host.Services.GetService(typeof(T)) is not T service)
+        if (ServiceProvider.GetService(typeof(T)) is not T service)
         {
             throw new ArgumentException($"{typeof(T)} needs to be registered in ConfigureServices within App.xaml.cs.");
         }
@@ -74,6 +77,7 @@ public partial class App : Application
                 services.AddSingleton<IActivationService, ActivationService>();
                 services.AddSingleton<IPageService, PageService>();
                 services.AddSingleton<INavigationService, NavigationService>();
+                services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
 
                 // Core Services
                 services.AddSingleton<IFileService, FileService>();
@@ -123,7 +127,7 @@ public partial class App : Application
                 services.AddHostedService(services =>
                     (Announcer)services.GetService<IAnnouncer>()!);
             }).Build();
-
+        Dependencies.ServiceProvider = App.ServiceProvider;
         App.GetService<IAppNotificationService>().Initialize();
         Task.Run(async () => await Host.RunAsync());
         UnhandledException += App_UnhandledException;

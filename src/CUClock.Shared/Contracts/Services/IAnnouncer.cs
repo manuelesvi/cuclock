@@ -61,4 +61,6 @@ public interface IAnnouncer : IDisposable
     void Previous();
 
     void Next();
+    
+    Announcer.Schedule GetScheduleFor(string cronExpression);
 }

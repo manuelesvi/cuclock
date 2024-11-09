@@ -1,4 +1,5 @@
 ﻿using Cronos;
+using CUClock.Shared.Services;
 
 namespace CUClock.Shared.Contracts.Services;
 

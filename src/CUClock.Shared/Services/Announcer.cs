@@ -13,7 +13,7 @@ using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace CUClock.Shared;
+namespace CUClock.Shared.Services;
 
 #nullable enable
 
@@ -553,7 +553,7 @@ public class Announcer : BackgroundService, IAnnouncer
         int pauseTimeMilliseconds = Default_Duration)
     {
         _logger.LogTrace("Announce began execution...");
-        _logger.LogInformation(text);
+        _logger.LogInformation(message: text);
         _playing = sound;
         await Task.Run(async () =>
         {
@@ -631,6 +631,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _synth?.Dispose();
 #pragma warning restore CA1416
         base.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 #nullable disable

@@ -1,4 +1,5 @@
 ﻿using Aphorismus.Shared.Entities;
+using CUClock.Shared.Services;
 
 namespace CUClock.Shared.Contracts.Services;
 

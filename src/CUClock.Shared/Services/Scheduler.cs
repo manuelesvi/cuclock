@@ -17,8 +17,8 @@ public class Scheduler : IScheduler
 
     public Scheduler(ILogger<IScheduler> logger)
     {
-        _buildScheduler = Task.Run(BuildScheduler);
         _logger = logger;
+        _buildScheduler = Task.Run(BuildScheduler);
     }
 
     public async Task Start()
@@ -56,10 +56,8 @@ public class Scheduler : IScheduler
             while ((index = expression.IndexOf(' ', lastIndex)) > -1)
             {
                 var value = expression[lastIndex..index];
-                // seconds
-                if (fieldNumber == 4)
+                if (fieldNumber == 4) // Day of month
                 {
-                    // Day of month
                     exprBuilder.Append("? ");
                 }
                 else
@@ -103,38 +101,12 @@ public class Scheduler : IScheduler
     }
 
     private async Task BuildScheduler()
-    {
-        // you can have base properties
+    {        
         var properties = new NameValueCollection();
-        // and override values via builder
         _scheduler = await SchedulerBuilder.Create(properties)
-            // default max concurrency is 10
             .UseDefaultThreadPool(x => x.MaxConcurrency = 5)
             .UseInMemoryStore()
-            // this is the default 
             .WithMisfireThreshold(TimeSpan.FromSeconds(60))
-            //.UsePersistentStore(x =>
-            //{
-            //    // force job data map values to be considered as strings
-            //    // prevents nasty surprises if object is accidentally serialized and then 
-            //    // serialization format breaks, defaults to false
-            //    x.UseProperties = true;
-            //    x.UseClustering();
-            //    // there are other SQL providers supported too 
-            //    x.UseSqlServer("my connection string");
-            //    // this requires Quartz.Serialization.Json NuGet package
-            //    x.UseJsonSerializer();
-            //})
-            // job initialization plugin handles our xml reading, without it defaults are used
-            // requires Quartz.Plugins NuGet package
-            //.UseXmlSchedulingConfiguration(x =>
-            //{
-            //    x.Files = new[] { "~/quartz_jobs.xml" };
-            //    // this is the default
-            //    x.FailOnFileNotFound = true;
-            //    // this is not the default
-            //    x.FailOnSchedulingError = true;
-            //})
             .BuildScheduler();
     }
 }

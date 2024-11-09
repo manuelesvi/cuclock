@@ -85,13 +85,12 @@ public class Announcer : BackgroundService, IAnnouncer
     /// Defines a speaking task
     /// programmed to execute in the future.
     /// They are defined for each quarter of an hour
-    /// and repeated until next hour.
+    /// and repeated every hour.
     /// </summary>
     /// <param name="cancellationToken">
     /// Stop or cancels the executing task.
     /// </param>
-    public delegate void Schedule(
-        CancellationToken cancellationToken);
+    public delegate void Schedule(CancellationToken cancellationToken);
 
     public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
 

@@ -251,7 +251,10 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public int NextCount => _next.Count;
 
-    public CancellationToken SilenceToken => _silence?.Token ?? default;
+    /// <summary>
+    /// A read-only token that silences the TTS system.
+    /// </summary>
+    public CancellationToken SilenceToken => _silence!.Token;
 
     public void Announce(bool sayMilliseconds = true)
     {
@@ -558,13 +561,13 @@ public class Announcer : BackgroundService, IAnnouncer
         {
             SelectVoice();
             _playing?.Play();
-            if (sound is not null)
-            {
-                await Task.Delay(pauseTimeMilliseconds, stoppingToken);
-            }
-            _logger.LogTrace("Calling Speak() on speech synthesizer");
             try
             {
+                if (sound is not null)
+                {
+                    await Task.Delay(pauseTimeMilliseconds, stoppingToken);
+                }
+                _logger.LogTrace("Calling Speak() on speech synthesizer");
                 _synth.Speak(text);
             }
             catch (OperationCanceledException e)
@@ -579,11 +582,8 @@ public class Announcer : BackgroundService, IAnnouncer
     }
 
     private void OnCaptionChanged(string text)
-        => CaptionChanged?.Invoke(this, new CaptionChangedEventArgs(text));
-
-    private void SelectVoice() => _synth.SelectVoice(_voices[
-        _random.Next(0, _voices.Count) // selects a random voice
-    ].Name);
+        => CaptionChanged?.Invoke(this,
+            new CaptionChangedEventArgs(text));
 
     private void ProcessMessage(PhrasePickedMessage message)
     {
@@ -598,7 +598,11 @@ public class Announcer : BackgroundService, IAnnouncer
             .Send(new PhrasePickedMessage(f));
         _logger.LogInformation("PhrasePickedMessage sent.");
     }
-    
+
+    private void SelectVoice() => _synth.SelectVoice(_voices[
+        _random.Next(0, _voices.Count) // selects a random voice
+    ].Name);
+
     private void SpeakPhrase(CancellationToken stoppingToken)
     {
         if (!EnableAphorisms)
@@ -607,7 +611,7 @@ public class Announcer : BackgroundService, IAnnouncer
         }
 
         stoppingToken.Register(_synth.SpeakAsyncCancelAll);
-
+        // move all items in _next stack to _previous
         var next = _next.ToArray();
         _next.Clear();
         foreach (var item in next)

@@ -83,7 +83,10 @@ public class Scheduler : IScheduler
                     .StartNow()
                     .Build();
 
-                _buildScheduler.Wait();
+                if (!_buildScheduler.IsCompleted)
+                {
+                    _buildScheduler.Wait();
+                }
                 await _scheduler.ScheduleJob(jobDetail, trigger); // associated
 
                 _logger.LogInformation("Job #{jobCount} scheduled with CRON expression: {expr}",

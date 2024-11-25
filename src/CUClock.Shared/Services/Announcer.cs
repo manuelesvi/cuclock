@@ -92,7 +92,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </param>
     public delegate void Schedule(CancellationToken cancellationToken);
 
-    public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
+    public event EventHandler<CaptionChangedEventArgs> CaptionChanged;
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -135,7 +135,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly Stack<Frase> _previous = new();
     private readonly Stack<Frase> _next = new();
 
-    private CancellationTokenSource? _silence;
+    private CancellationTokenSource? _silence = new();
 
     /// <summary>
     /// Initializes an <see cref="Announcer"/>.
@@ -152,13 +152,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _phraseProvider = phraseProvider;
         _scheduler = scheduler;
         _logger = logger;
-        var isRegistered = WeakReferenceMessenger.Default
-            .IsRegistered<PhrasePickedMessage>(this);
-        if (!isRegistered)
-        {
-            WeakReferenceMessenger.Default.Register<PhrasePickedMessage>(this,
-                (_, message) => ProcessMessage(message));
-        }
+        
         var entry = System.Reflection.Assembly.GetEntryAssembly()!
             .Location;
 
@@ -214,11 +208,14 @@ public class Announcer : BackgroundService, IAnnouncer
             } // for each
         });
 
-        var startScheduler = Task.Run(async () => {
-            await _scheduler.RegisterJobs(Schedules);
-            await _scheduler.Start();
-            _logger.LogInformation("Job Scheduler started on {time}...",
-                DateTime.Now.ToLongTimeString());
+        var startScheduler = Task.Run(async () =>
+        {
+            await _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
+            {
+                await _scheduler.Start();
+                _logger.LogInformation("Job Scheduler started on {time}...",
+                    DateTime.Now.ToLongTimeString());
+            });            
         });
 
         _ = Task.Run(async () =>
@@ -258,11 +255,13 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public void Announce(bool sayMilliseconds = true)
     {
+        _logger.LogInformation("Announce began execution. {time}", DateTime.Now.ToLongTimeString());
         _ = Task.Run(async () =>
         {
             CultureInfo.CurrentCulture = _mxCulture;
             CultureInfo.CurrentUICulture = _mxCulture;
             await SayCurrentTime(sayMilliseconds);
+            _logger.LogInformation("Announce executed. {time}", DateTime.Now.ToLongTimeString());
         });
     }
 
@@ -585,18 +584,15 @@ public class Announcer : BackgroundService, IAnnouncer
         => CaptionChanged?.Invoke(this,
             new CaptionChangedEventArgs(text));
 
-    private void ProcessMessage(PhrasePickedMessage message)
-    {
-        SelectVoice();
-        _synth.SpeakAsync(message.Value.Texto);
-    }
-
     private void SendMessage(Frase f)
     {
         // sends chosen phrase
         WeakReferenceMessenger.Default
             .Send(new PhrasePickedMessage(f));
         _logger.LogInformation("PhrasePickedMessage sent.");
+
+        SelectVoice();
+        _synth.SpeakAsync(f.Texto);
     }
 
     private void SelectVoice() => _synth.SelectVoice(_voices[
@@ -618,7 +614,7 @@ public class Announcer : BackgroundService, IAnnouncer
         {
             _previous.Push(item);
         }
-        
+
         var f = ((PhraseProvider)_phraseProvider).GetRandomPhrase(_random);
         _previous.Push(f);
         SendMessage(f);

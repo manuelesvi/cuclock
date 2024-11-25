@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
+             x:Class="CUClock.Maui.Views.TimeDisplayPage"
+             x:DataType="vm:TimeDisplayViewModel">
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+          ColumnDefinitions="50*,50*" Margin="10">
+        <Label x:Name="CaptionText"
+               FontSize="18" Margin="0,0,0,10"
+               Grid.ColumnSpan="2" HorizontalTextAlignment="Center" />
+
+        <Editor x:Name="PhraseBox"
+                Grid.Row="1"  Grid.ColumnSpan="2"
+                VerticalOptions="Fill" />
+
+        <StackLayout Orientation="Horizontal" HorizontalOptions="Start"
+                     Grid.Row="2" Grid.Column="0">
+            <Switch x:Name="msToggle"
+                    Toggled="MsToggle_Toggled"
+                    IsToggled="{Binding MillisecondSwitch}" />
+            <Label x:Name="msLabel" Text="Con milisegundos" />
+        </StackLayout>
+
+        <StackLayout Orientation="Horizontal"
+                     Grid.Row="2" Grid.Column="1">
+            <Switch x:Name="aforismoToggle"
+                    Toggled="AforismoToggle_Toggled"
+                    IsToggled="{Binding AphorismSwitch}" />
+            <Label x:Name="aforismoLabel" Text="Con aforismo" />
+        </StackLayout>
+
+        <StackLayout Orientation="Horizontal"
+                     Grid.Row="3" Grid.Column="0">
+            <Switch x:Name="galloToggle"
+                    Toggled="GalloToggle_Toggled"
+                    IsToggled="{Binding GalloSwitch}" />
+            <Label x:Name="galloLabel" Text="Con gallo" />
+        </StackLayout>
+    </Grid>
+</ContentPage>

@@ -2,12 +2,9 @@
 ___
 
 ## About
-
-A WinUI+Console application that runs at 0, 15, 30 & 45 minutes every hour
-to tell the time in mexican spanish (requires Windows).
-
-Once the current time has been announced, system will pick up a phrase randomly
-from `Aphorismus.Shared.dll` and display it as a Toast Notification.
+A multiple UI application (Console + WinUI + MAUI) that runs at 
+0, 15, 30 & 45 minutes every hour to tell the time in mexican spanish 
+along a short phrase taken from Tolstoi's Aphorisms book.
 
 ## Compile WinUI desktop application
 1. Open `CUClock.sln` with Visual Studio 2022

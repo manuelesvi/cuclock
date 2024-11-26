@@ -614,7 +614,7 @@ public class Announcer : BackgroundService, IAnnouncer
             _previous.Push(item);
         }
 
-        var f = ((PhraseProvider)_phraseProvider).GetRandomPhrase(_random);
+        var f = _phraseProvider.GetRandomPhrase(_random);
         _previous.Push(f);
         SendMessage(f);
     }

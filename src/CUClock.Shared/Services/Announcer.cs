@@ -591,8 +591,7 @@ public class Announcer : BackgroundService, IAnnouncer
             .Send(new PhrasePickedMessage(f));
         _logger.LogInformation("PhrasePickedMessage sent.");
 
-        SelectVoice();
-        _synth.SpeakAsync(f.Texto);
+        SpeakPhrase(f);
     }
 
     private void SelectVoice() => _synth.SelectVoice(_voices[

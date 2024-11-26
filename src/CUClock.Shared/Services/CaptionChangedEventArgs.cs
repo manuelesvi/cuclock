@@ -4,7 +4,6 @@ public class CaptionChangedEventArgs(string text) : EventArgs
 {
     public string Text
     {
-        get; init;
+        get;
     } = text;
 }
-

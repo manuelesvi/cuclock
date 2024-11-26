@@ -24,7 +24,6 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
         var services = builder.Services;
-        services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
         {
             var logger = services.GetService<ILogger<PhraseProvider>>()!;
@@ -54,13 +53,14 @@ public static class MauiProgram
                 return fullPath;
             }
         });
-        services.AddTransient<IAnnouncer, Announcer>();
+        services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
+        services.AddSingleton<IAnnouncer, Announcer>();
         services.AddTransient<TimeDisplayViewModel>();
         //services.AddHostedService(services =>
         //    (Announcer)services.GetService<IAnnouncer>()!);
 
-        Shared.Helpers.Dependencies.ServiceProvider = services.BuildServiceProvider();
-
-        return builder.Build();
+        var app = builder.Build();
+        Shared.Helpers.Dependencies.ServiceProvider = app.Services;
+        return app;
     }
 }

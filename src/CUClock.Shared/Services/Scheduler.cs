@@ -45,62 +45,83 @@ public class Scheduler : IScheduler
 
     public async Task RegisterJobs(IDictionary<CronExpression, Announcer.Schedule> jobs)
     {
-        var jobCount = 0;
+        var jobNumber = 0;
         foreach (var entry in jobs)
         {
-            var expression = "0 " + entry.Key.ToString();
-            var exprBuilder = new StringBuilder();
-            var index = 0;
-            var lastIndex = 0;
-            var fieldNumber = 1;
-            while ((index = expression.IndexOf(' ', lastIndex)) > -1)
+            if (!await RegisterJob(++jobNumber, entry))
             {
-                var value = expression[lastIndex..index];
-                if (fieldNumber == 4) // Day of month
-                {
-                    exprBuilder.Append("? ");
-                }
-                else
-                {
-                    exprBuilder.Append(value).Append(' ');
-                }
-                lastIndex = index + 1;
-                ++fieldNumber;
-            }
-            expression = exprBuilder.ToString() + "* ";
-            _logger.LogInformation("Creating job detail and trigger for {cronExpr}",
-                expression);
-            try
-            {
-                var jobDetail = JobBuilder.Create<AnnounceJob>()
-                    .WithIdentity($"announceJob{++jobCount}", "group1")
-                    .UsingJobData(AnnounceJob.CRON_KEY, expression)
-                    .Build();
-
-                var trigger = TriggerBuilder.Create()
-                    .WithIdentity($"cronTrigger{jobCount}", "group1")
-                    .WithCronSchedule(expression)
-                    .StartNow()
-                    .Build();
-
-                if (!_buildScheduler.IsCompleted)
-                {
-                    _buildScheduler.Wait();
-                }
-                await _scheduler.ScheduleJob(jobDetail, trigger); // associated
-
-                _logger.LogInformation("Job #{jobCount} scheduled with CRON expression: {expr}",
-                    jobCount, expression);
-
-                var state = await _scheduler.GetTriggerState(trigger.Key);
-                _logger.LogInformation("Job Trigger is in {state} state.", state);
-            }
-            catch (FormatException ex)
-            {
-                _logger.LogError(ex, "CRON expression is invalid");
-                _logger.LogError("Job #{jobCount} FAILED!", jobCount);
+                --jobNumber;
             }
         }
+    }
+
+    private async Task<bool> RegisterJob(int jobNumber, KeyValuePair<CronExpression, Announcer.Schedule> entry)
+    {
+        var expression = ParseCRONExpression(entry.Key.ToString());
+        _logger.LogInformation("Creating job detail and trigger for {cronExpr}",
+            expression);
+        try
+        {
+            var jobDetail = JobBuilder.Create<AnnounceJob>()
+                .WithIdentity($"announceJob{jobNumber}", "group1")
+                .UsingJobData(AnnounceJob.CRON_KEY, expression)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"cronTrigger{jobNumber}", "group1")
+                .WithCronSchedule(expression)
+                .StartNow()
+                .Build();
+
+            if (!_buildScheduler.IsCompleted)
+            {
+                _buildScheduler.Wait();
+            }
+            await _scheduler.ScheduleJob(jobDetail, trigger); // associated
+
+            _logger.LogInformation("Job #{jobNumber} scheduled with CRON expression: {expr}",
+                jobNumber, expression);
+
+            var state = await _scheduler.GetTriggerState(trigger.Key);
+            _logger.LogInformation("Job Trigger is in {state} state.", state);
+            return true;
+        }
+        catch (FormatException ex)
+        {
+            _logger.LogError(ex, "CRON expression is invalid");
+            _logger.LogError("Job #{jobNumber} FAILED!", jobNumber);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Couldn't create Job #{jobNumber}", jobNumber);
+            return false;
+        }
+    }
+
+    private static string ParseCRONExpression(string original)
+    {
+        var expression = "0 " + original;
+        var exprBuilder = new StringBuilder();
+        var index = 0;
+        var lastIndex = 0;
+        var fieldNumber = 1;
+        while ((index = expression.IndexOf(' ', lastIndex)) > -1)
+        {
+            var value = expression[lastIndex..index];
+            if (fieldNumber == 4) // Day of month
+            {
+                exprBuilder.Append("? ");
+            }
+            else
+            {
+                exprBuilder.Append(value).Append(' ');
+            }
+            lastIndex = index + 1;
+            ++fieldNumber;
+        }
+        expression = exprBuilder.ToString() + "* ";
+        return expression;
     }
 
     private async Task BuildScheduler()

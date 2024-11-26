@@ -92,7 +92,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </param>
     public delegate void Schedule(CancellationToken cancellationToken);
 
-    public event EventHandler<CaptionChangedEventArgs> CaptionChanged;
+    public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.

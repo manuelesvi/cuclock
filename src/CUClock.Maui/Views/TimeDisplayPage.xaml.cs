@@ -26,7 +26,6 @@ public partial class TimeDisplayPage : ContentPage
 
     private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        Debug.WriteLine("{0} == {1}", e.PropertyName, nameof(TimeDisplayViewModel.Caption));
         if (e.PropertyName == nameof(TimeDisplayViewModel.Caption))
         {
             var vm = BindingContext as TimeDisplayViewModel;

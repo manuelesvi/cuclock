@@ -60,20 +60,20 @@ public partial class TimeDisplayPage : ContentPage
             PhraseBox.Text = sb.ToString();
         });
 
-//        var payload = string.Format(
-//            "AppNotificationSamplePayload".GetLocalized(),
-//            AppContext.BaseDirectory, message.Value.Texto);
-//        try
-//        {
-//            App.GetService<IAppNotificationService>().Show(payload);
-//        }
-//        catch (Exception ex)
-//        {
-//#if DEBUG
-//            Debug.WriteLine(ex);
-//            Debugger.Break();
-//#endif
-//        }
+        //        var payload = string.Format(
+        //            "AppNotificationSamplePayload".GetLocalized(),
+        //            AppContext.BaseDirectory, message.Value.Texto);
+        //        try
+        //        {
+        //            App.GetService<IAppNotificationService>().Show(payload);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //#if DEBUG
+        //            Debug.WriteLine(ex);
+        //            Debugger.Break();
+        //#endif
+        //        }
     }
 
     private void MsToggle_Toggled(object sender, ToggledEventArgs e)

@@ -63,14 +63,6 @@ public partial class TimeDisplayViewModel : BaseViewModel
         }, () => _announcer.NextCount > 0);
 
         Repeat = new RelayCommand(() => _announcer.SpeakPhrase(Frase));
-
-        Caption = string.Empty;
-        _announcer.CaptionChanged += (_, e) =>
-        {
-            Caption = e.Text;
-            OnPropertyChanged(nameof(Caption));
-        };
-
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
         {
@@ -138,7 +130,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
     public string Caption
     {
         get; set;
-    }
+    } = string.Empty;
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {

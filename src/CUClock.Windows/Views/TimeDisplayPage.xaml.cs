@@ -15,8 +15,6 @@ public sealed partial class TimeDisplayPage : Page
     public TimeDisplayPage()
     {
         ViewModel = App.GetService<TimeDisplayViewModel>();
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-
         InitializeComponent();
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
@@ -63,15 +61,6 @@ public sealed partial class TimeDisplayPage : Page
             Debug.WriteLine(ex);
             Debugger.Break();
 #endif
-        }
-    }
-
-    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(ViewModel.Caption))
-        {
-            DispatcherQueue.TryEnqueue(() =>
-                CaptionText.Text = ViewModel.Caption);
         }
     }
 }

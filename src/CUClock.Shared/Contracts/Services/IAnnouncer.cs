@@ -8,8 +8,6 @@ namespace CUClock.Shared.Contracts.Services;
 /// </summary>
 public interface IAnnouncer : IDisposable
 {
-    event EventHandler<CaptionChangedEventArgs> CaptionChanged;
-
     /// <summary>
     /// Specifies whether an aphorism should be mentioned within
     /// scheduled tasks.

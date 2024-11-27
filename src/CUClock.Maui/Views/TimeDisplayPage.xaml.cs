@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Shared.ViewModels;
@@ -20,19 +18,7 @@ public partial class TimeDisplayPage : ContentPage
     {
         var services = App.Current!.Handler.GetServiceProvider();
         var vm = services.GetService<TimeDisplayViewModel>();
-        vm!.PropertyChanged += Vm_PropertyChanged;
         BindingContext = vm;
-    }
-
-    private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(TimeDisplayViewModel.Caption))
-        {
-            var vm = BindingContext as TimeDisplayViewModel;
-            var caption = vm?.Caption ?? string.Empty;
-            Dispatcher.Dispatch(() =>
-                CaptionText.Text = caption);
-        }
     }
 
     private void RegisterMessageRecipient()

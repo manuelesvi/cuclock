@@ -85,8 +85,6 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     public delegate void Schedule();
 
-    public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
-
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
     /// </summary>

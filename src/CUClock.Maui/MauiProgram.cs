@@ -27,16 +27,6 @@ public static class MauiProgram
         services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
         {
             var logger = services.GetService<ILogger<PhraseProvider>>()!;
-            var path = Path.GetDirectoryName(Environment.ProcessPath!)!;
-            DirectoryInfo di;
-            while ((di = Directory.GetParent(path)!).Name != "src")
-            {
-                path = di.FullName;
-            }
-            di = Directory.GetParent(path)!;
-            path = Path.Combine(di.FullName,
-                "aphorismus\\src\\Aphorismus\\Resources\\Raw");
-
             return new PhraseProvider(logger)
             {
                 FileExists = filePath => Task.FromResult(
@@ -44,14 +34,6 @@ public static class MauiProgram
                 ReadFile = filePath => Task.FromResult(
                     (Stream)File.OpenRead(AppendRoot(filePath)))
             };
-
-            string AppendRoot(string filePath)
-            {
-                filePath = filePath.Replace("/", "\\");
-                var fullPath = Path.Combine(path, filePath);
-                logger.LogInformation("Fetching content from: {path}", fullPath);
-                return fullPath;
-            }
         });
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddSingleton<IAnnouncer, Announcer>();

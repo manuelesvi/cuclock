@@ -37,5 +37,16 @@
                     IsToggled="{Binding GalloSwitch}" />
             <Label x:Name="galloLabel" Text="Con gallo" />
         </StackLayout>
+
+        <HorizontalStackLayout Spacing="7"
+            Grid.Row="4" Grid.ColumnSpan="2">
+            <Button Text="Silencio" Command="{Binding Silence}" />
+            <Button Text="Anunciar" Command="{Binding Announce}" />
+            <Button Text="{Binding AnteriorText}" Command="{Binding Previous}" />
+            <Button Text="Aforismo" Command="{Binding SpeakPhrase}" />
+            <Button Text="Repetir" Command="{Binding Repeat}" />
+            <Button Text="{Binding SiguienteText}" Command="{Binding Next}" />
+        </HorizontalStackLayout>
+
     </Grid>
 </ContentPage>

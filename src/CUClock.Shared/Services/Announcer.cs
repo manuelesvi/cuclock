@@ -460,7 +460,8 @@ public class Announcer : BackgroundService, IAnnouncer
             ? DateTime.Now.TimeOfDay.Hours + 1
             : DateTime.Now.TimeOfDay.Hours - 11;
         var txt = string.Format("{0} cuarto para la{2} {1}",
-            PrefijoHora(hora, conArticulo: false), hora,
+            PrefijoHora(hora, conArticulo: false),
+            hora != 1 ? hora : "una",
             hora > 1 ? "s" : "");
         await Announce(txt, BellsWAV, Bells_Duration);
         await Task.Delay(Bells_AfterDelay, SilenceToken);

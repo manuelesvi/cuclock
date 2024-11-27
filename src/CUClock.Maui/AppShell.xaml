@@ -9,7 +9,7 @@
 
     <FlyoutItem FlyoutDisplayOptions="AsMultipleItems">
         <ShellContent 
-            Title="Principal"
+            Title="Aforismos"
             ContentTemplate="{DataTemplate local:TimeDisplayPage}"
             Route="TimeDisplay" />
     </FlyoutItem>

@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Media;
-using System.Speech.Synthesis;
 using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
@@ -12,6 +10,9 @@ using Humanizer;
 using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Media;
+using Microsoft.Maui.Storage;
+using Plugin.Maui.Audio;
 
 namespace CUClock.Shared.Services;
 
@@ -58,11 +59,6 @@ public class Announcer : BackgroundService, IAnnouncer
     private const int Precision_Millisecond = 3;
 
     /// <summary>
-    /// TwoLetter ISO code.
-    /// </summary>
-    private const string Spanish = "es";
-
-    /// <summary>
     /// Half an hour.
     /// </summary>
     private const int HalfHour = 30;
@@ -87,10 +83,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// They are defined for each quarter of an hour
     /// and repeated every hour.
     /// </summary>
-    /// <param name="cancellationToken">
-    /// Stop or cancels the executing task.
-    /// </param>
-    public delegate void Schedule(CancellationToken cancellationToken);
+    public delegate void Schedule();
 
     public event EventHandler<CaptionChangedEventArgs>? CaptionChanged;
 
@@ -100,42 +93,27 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly CultureInfo _mxCulture
         = CultureInfo.GetCultureInfo("es-MX");
 
-    private readonly Random _random = new();
     private readonly IPhraseProvider _phraseProvider;
     private readonly IScheduler _scheduler;
-
-    /// <summary>
-    /// Logging.
-    /// </summary>
     private readonly ILogger<Announcer> _logger;
+    private readonly IAudioManager _audioManager;
+    private readonly Random _random = new();
 
-#pragma warning disable CA1416 // skip platform compatibility
-    private readonly SoundPlayer
-        _bells,
-        _cucu,
-        _cucaracha,
-        _pistol,
-        _gallo,
-        _pajaro_loco;
+    private const string BellsWAV = "bells.wav";
+    private const string CuCuWAV = "CUCKOOO.WAV";
+    private const string CucarachaWAV = "horn.wav";
+    private const string PistolWAV = "pistol.wav";
+    private const string Gallo1WAV = "rooster1.wav";
+    private const string Gallo2WAV = "rooster2.wav";
+    private const string PajaroLocoWAV = "pajaro_loco.wav";
 
-    private SoundPlayer? _playing;
-    private readonly string _wavDir;
-
-    /// <summary>
-    /// TTS synth (Windows only).
-    /// </summary>
-    private readonly SpeechSynthesizer _synth = new();
-
-    /// <summary>
-    /// A <see cref="List{VoiceInfo}"/> of installed voices in
-    /// <see cref="Spanish">.
-    /// </summary>
-    private readonly List<VoiceInfo> _voices = [];
+    private readonly SpeechOptions _ttsOptions = new();
+    private readonly Task _loadLocales;
+    private Locale[]? _esLocales;
+    private CancellationTokenSource? _silence = new();
 
     private readonly Stack<Frase> _previous = new();
     private readonly Stack<Frase> _next = new();
-
-    private CancellationTokenSource? _silence = new();
 
     /// <summary>
     /// Initializes an <see cref="Announcer"/>.
@@ -145,29 +123,16 @@ public class Announcer : BackgroundService, IAnnouncer
     public Announcer(
         IPhraseProvider phraseProvider,
         IScheduler scheduler,
+        IAudioManager audioManager,
         ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
         CultureInfo.CurrentUICulture = _mxCulture;
+
         _phraseProvider = phraseProvider;
         _scheduler = scheduler;
+        _audioManager = audioManager;
         _logger = logger;
-        
-        var entry = System.Reflection.Assembly.GetEntryAssembly()!
-            .Location;
-
-        var dir = Path.GetDirectoryName(entry)!;
-        _wavDir = Path.Combine(dir, "WAVs");
-
-        _bells = new SoundPlayer(_wavDir + "\\bells.wav");
-        _cucu = new SoundPlayer(_wavDir + "\\CUCKOOO.WAV");
-        _cucaracha = new SoundPlayer(_wavDir + "\\horn.wav");
-        _pistol = new SoundPlayer(_wavDir + "\\pistol.wav");
-        _gallo = new SoundPlayer();
-        _pajaro_loco = new SoundPlayer(_wavDir + "\\pajaro_loco.wav");
-
-        Trace.Assert(Directory.Exists(dir)
-            && Directory.Exists(_wavDir), "dir not found");
 
         Schedules = new Dictionary<CronExpression, Schedule>
         {
@@ -177,35 +142,12 @@ public class Announcer : BackgroundService, IAnnouncer
             { CronExpression.Parse("45 * * * SUN-SAT"), CuartoPara }
         };
 
-        _synth.SpeakProgress += (_, e) => OnCaptionChanged(e.Text);
-        _synth.SpeakCompleted += (_, _) => OnCaptionChanged(string.Empty);
-
-        var setupTTS = Task.Run(() =>
+        _loadLocales = Task.Run(async () =>
         {
-            // Sets a value for the speaking rate
-            _synth.Rate = -1;
-            // Configures audio output
-            _synth.SetOutputToDefaultAudioDevice();
-
-            //// remove handler whenever its done
-            //_synth.SpeakCompleted += (s, e) =>
-            //    _synth.SpeakProgress -= _synth_SpeakProgress;
-        });
-
-        var readVoices = Task.Run(() =>
-        {
-            // list all voices as log info
-            foreach (var item in _synth.GetInstalledVoices()
-                .Where(v => v.VoiceInfo.Culture
-                    .TwoLetterISOLanguageName == Spanish))
-            {
-                _voices.Add(item.VoiceInfo);
-#if DEBUG
-                _logger.LogInformation("{culture} - {voice}",
-                    item.VoiceInfo.Culture.ToString(),
-                    item.VoiceInfo.Name);
-#endif
-            } // for each
+            var locales = await TextToSpeech.Default.GetLocalesAsync();
+            _esLocales = locales
+                .Where(l => l.Language.StartsWith(_mxCulture.TwoLetterISOLanguageName))
+                .ToArray();
         });
 
         var startScheduler = Task.Run(async () =>
@@ -215,29 +157,12 @@ public class Announcer : BackgroundService, IAnnouncer
                 await _scheduler.Start();
                 _logger.LogInformation("Job Scheduler started on {time}...",
                     DateTime.Now.ToLongTimeString());
-            });            
+            });
         });
 
         _ = Task.Run(async () =>
-            await Task.WhenAll(setupTTS, readVoices, startScheduler));
+            await Task.WhenAll(_loadLocales, startScheduler));
     } // Announcer .ctor()
-
-    /// <summary>
-    /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
-    /// that holds
-    /// <see cref="Schedule"/> tasks scheduled
-    /// to run at 0, 15, 30 & 45 minutes each hour (MON-SUN).
-    /// </summary>
-    private Dictionary<CronExpression, Schedule> Schedules
-    {
-        get;
-    }
-
-    public Schedule GetScheduleFor(string cronExpression)
-    {
-        var minutes = int.Parse(cronExpression.Split(' ')[1]);
-        return GetSchedule(minutes);
-    }
 
     public bool EnableAphorisms
     {
@@ -252,6 +177,17 @@ public class Announcer : BackgroundService, IAnnouncer
     /// A read-only token that silences the TTS system.
     /// </summary>
     public CancellationToken SilenceToken => _silence!.Token;
+
+    /// <summary>
+    /// A read-only <see cref="Dictionary2{TKey, TValue}"/>
+    /// that holds
+    /// <see cref="Schedule"/> tasks scheduled
+    /// to run at 0, 15, 30 & 45 minutes each hour (MON-SUN).
+    /// </summary>
+    private Dictionary<CronExpression, Schedule> Schedules
+    {
+        get;
+    }
 
     public void Announce(bool sayMilliseconds = true)
     {
@@ -269,10 +205,7 @@ public class Announcer : BackgroundService, IAnnouncer
     {
         _logger.LogInformation("Silencing...");
         _silence?.Cancel();
-        _playing?.Stop();
-        _playing?.Dispose();
-        _playing = null;
-        _synth.SpeakAsyncCancelAll();
+        _silence = new();
         _logger.LogInformation("Silenced.");
     }
 
@@ -285,34 +218,21 @@ public class Announcer : BackgroundService, IAnnouncer
             if (conGallo)
             {
                 IList<(string file, int duration)> gallos = [
-                    ("rooster1.wav", 30), // 3 segundos
-                    ("rooster2.wav", 35)]; // 3.5s
+                    (Gallo1WAV, 30), // 3 segundos
+                    (Gallo2WAV, 35)]; // 3.5s
 
                 var (file, duration) = gallos[_random.Next(0, 2)];
-                _gallo.SoundLocation = _wavDir + "\\" + file;
-                _gallo.Load();
-                _playing = _gallo;
-                _gallo.Play();
-
-                _logger.LogInformation("@{now} - Sleeping for {time} ms.",
-                    DateTime.Now.TimeOfDay, duration * 100);
-
+                PlaySound(file);
                 await Task.Delay(duration * 100);
-
-                _logger.LogInformation("@{now} Woke up!", DateTime.Now.TimeOfDay);
             }
 
-            _pistol.Play();
+            PlaySound(PistolWAV);
             await Task.Delay(2000);
-            SpeakPhrase(_silence.Token);
+            SpeakPhrase();
         });
     }
 
-    public void SpeakPhrase(Frase frase)
-    {
-        SelectVoice();
-        _synth.SpeakAsync(frase.Texto);
-    }
+    public void SpeakPhrase(Frase frase) => Speak(frase.Texto);
 
     public void Previous()
     {
@@ -336,6 +256,12 @@ public class Announcer : BackgroundService, IAnnouncer
         SendMessage(f);
     }
 
+    public Schedule GetScheduleFor(string cronExpression)
+    {
+        var minutes = int.Parse(cronExpression.Split(' ')[1]);
+        return GetSchedule(minutes);
+    }
+
     protected async override Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
@@ -345,9 +271,7 @@ public class Announcer : BackgroundService, IAnnouncer
         var tasks = new List<Task>(
             Schedules.Count + 1) // each quarter + present
         {
-            SayCurrentTime(
-                sayMilliseconds: true,
-                stoppingToken)
+            SayCurrentTime(sayMilliseconds: true)
         };
         foreach (var key in Schedules.Keys)
         {
@@ -358,41 +282,6 @@ public class Announcer : BackgroundService, IAnnouncer
         Trace.Assert(tasks.Count == FiveTasks,
             $"Invalid count, expected {FiveTasks}");
         await Task.WhenAll(tasks); // done
-    }
-
-    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
-        ? hora > 1
-            ? "Son las"
-            : "Es la"
-        : hora > 1
-            ? "Son"
-            : "Es";
-
-    private static string SufijoHora(int hora)
-        => hora > 1 ? "s" : "";
-
-    private static string Faltan(
-        bool saySecondsAndMilliseconds = false)
-    {
-        var currentTime = DateTime.Now;
-        var secondsTxt = saySecondsAndMilliseconds
-            ? string.Format("{1} milisegundos, {0} segundos y, ",
-                60 - currentTime.Second,
-                1000 - currentTime.Millisecond)
-            : string.Empty;
-
-        var horaSig = DateTime.Now.Hour + 1 > 12
-            ? 1 + DateTime.Now.Hour - 12
-            : 1 + DateTime.Now.Hour;
-
-        var txt = string.Format(
-            "Faltan {3} {0} {4} para la{2} {1}",
-            60 - DateTime.Now.Minute,
-            horaSig, SufijoHora(horaSig),
-            secondsTxt,
-            saySecondsAndMilliseconds ? "minutos" : string.Empty);
-
-        return txt;
     }
 
     private async Task WaitUntilNext(CronExpression cron,
@@ -435,8 +324,51 @@ public class Announcer : BackgroundService, IAnnouncer
         }
     }
 
-    private async Task SayCurrentTime(bool sayMilliseconds = true,
-        CancellationToken? stoppingToken = null)
+    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
+        ? hora > 1
+            ? "Son las"
+            : "Es la"
+        : hora > 1
+            ? "Son"
+            : "Es";
+
+    private static string SufijoHora(int hora)
+        => hora > 1 ? "s" : "";
+
+    private static string Faltan(
+        bool saySecondsAndMilliseconds = false)
+    {
+        var currentTime = DateTime.Now;
+        var secondsTxt = saySecondsAndMilliseconds
+            ? string.Format("{1} milisegundos, {0} segundos y, ",
+                60 - currentTime.Second,
+                1000 - currentTime.Millisecond)
+            : string.Empty;
+
+        var horaSig = DateTime.Now.Hour + 1 > 12
+            ? 1 + DateTime.Now.Hour - 12
+            : 1 + DateTime.Now.Hour;
+
+        var txt = string.Format(
+            "Faltan {3} {0} {4} para la{2} {1}",
+            60 - DateTime.Now.Minute,
+            horaSig, SufijoHora(horaSig),
+            secondsTxt,
+            saySecondsAndMilliseconds ? "minutos" : string.Empty);
+
+        return txt;
+    }
+    
+    private Schedule GetSchedule(int minutes) => minutes switch
+    {
+        0 => EnPunto,
+        15 => CuartoDeHora,
+        30 => YMedia,
+        45 => CuartoPara,
+        _ => throw new NotSupportedException(),
+    };
+
+    private async Task SayCurrentTime(bool sayMilliseconds = true)
     {
         _silence = new CancellationTokenSource();
         var now = DateTime.Now;
@@ -464,22 +396,11 @@ public class Announcer : BackgroundService, IAnnouncer
                 precision: Precision_Second),
             now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
 
-        await Announce(txt, _cucaracha,
-            stoppingToken ?? _silence.Token);
-
-        SpeakPhrase(stoppingToken ?? _silence.Token);
+        await Announce(txt, CucarachaWAV);
+        SpeakPhrase();
     }
 
-    private Schedule GetSchedule(int minutes) => minutes switch
-    {
-        0 => EnPunto,
-        15 => CuartoDeHora,
-        30 => YMedia,
-        45 => CuartoPara,
-        _ => throw new NotSupportedException(),
-    };
-
-    private async void EnPunto(CancellationToken stoppingToken)
+    private async void EnPunto()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -501,17 +422,15 @@ public class Announcer : BackgroundService, IAnnouncer
                 ? "de la tarde"
                 : "de la noche");
 
-        await Announce(txt, _cucu, stoppingToken);
-        await Task.Delay(250, stoppingToken);
+        await Announce(txt, wavFile: CuCuWAV);
+        await Task.Delay(250, SilenceToken);
         await Announce(string.Format("La{1} {0} en punto",
             hora > 1 ? hora.ToString() : "una",
-            hora == 1 ? "" : "s"),
-            sound: _cucu, stoppingToken);
-
-        SpeakPhrase(stoppingToken);
+            hora == 1 ? "" : "s"));
+        SpeakPhrase();
     }
 
-    private async void CuartoDeHora(CancellationToken stoppingToken)
+    private async void CuartoDeHora()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -519,11 +438,11 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} {1} y cuarto",
             PrefijoHora(hora),
             hora != 1 ? hora : "una");
-        await Announce(txt, _pajaro_loco, stoppingToken, Default_Duration);
-        SpeakPhrase(stoppingToken);
+        await Announce(txt, PajaroLocoWAV);
+        SpeakPhrase();
     }
 
-    private async void YMedia(CancellationToken stoppingToken)
+    private async void YMedia()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -531,11 +450,11 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} {1} y media",
             PrefijoHora(hora, conArticulo: false), // {0}
             hora != 1 ? hora : "una"); // {1}
-        await Announce(txt, _cucaracha, stoppingToken);
-        SpeakPhrase(stoppingToken);
+        await Announce(txt, CucarachaWAV);
+        SpeakPhrase();
     }
 
-    private async void CuartoPara(CancellationToken stoppingToken)
+    private async void CuartoPara()
     {
         var hora = DateTime.Now.TimeOfDay.Hours + 1 < 13
             ? DateTime.Now.TimeOfDay.Hours + 1
@@ -543,31 +462,27 @@ public class Announcer : BackgroundService, IAnnouncer
         var txt = string.Format("{0} cuarto para la{2} {1}",
             PrefijoHora(hora, conArticulo: false), hora,
             hora > 1 ? "s" : "");
-        await Announce(txt, _bells, stoppingToken, Bells_Duration);
-        await Task.Delay(Bells_AfterDelay, stoppingToken);
-        SpeakPhrase(stoppingToken);
+        await Announce(txt, BellsWAV, Bells_Duration);
+        await Task.Delay(Bells_AfterDelay, SilenceToken);
+        SpeakPhrase();
     }
 
     private async Task Announce(string text,
-        SoundPlayer? sound,
-        CancellationToken stoppingToken,
+        string wavFile = "",
         int pauseTimeMilliseconds = Default_Duration)
     {
         _logger.LogTrace("Announce began execution...");
         _logger.LogInformation(message: text);
-        _playing = sound;
         await Task.Run(async () =>
         {
-            SelectVoice();
-            _playing?.Play();
             try
             {
-                if (sound is not null)
+                if (!string.IsNullOrWhiteSpace(wavFile))
                 {
-                    await Task.Delay(pauseTimeMilliseconds, stoppingToken);
+                    PlaySound(wavFile);
+                    await Task.Delay(pauseTimeMilliseconds, SilenceToken);
                 }
-                _logger.LogTrace("Calling Speak() on speech synthesizer");
-                _synth.Speak(text);
+                Speak(text);
             }
             catch (OperationCanceledException e)
             {
@@ -580,32 +495,51 @@ public class Announcer : BackgroundService, IAnnouncer
         _logger.LogTrace("Announce execution finished.");
     }
 
-    private void OnCaptionChanged(string text)
-        => CaptionChanged?.Invoke(this,
-            new CaptionChangedEventArgs(text));
-
-    private void SendMessage(Frase f)
+    private async void PlaySound(string wavFile)
     {
-        // sends chosen phrase
-        WeakReferenceMessenger.Default
-            .Send(new PhrasePickedMessage(f));
-        _logger.LogInformation("PhrasePickedMessage sent.");
-
-        SpeakPhrase(f);
+        if (string.IsNullOrWhiteSpace(wavFile))
+        {
+            return;
+        }
+        using var player = _audioManager.CreateAsyncPlayer(
+            await FileSystem.OpenAppPackageFileAsync(Path.Combine("WAVs", wavFile)));
+        await player.PlayAsync(_silence!.Token);
     }
 
-    private void SelectVoice() => _synth.SelectVoice(_voices[
-        _random.Next(0, _voices.Count) // selects a random voice
-    ].Name);
+    private void Speak(string text)
+    {
+        if (!_loadLocales.IsCompleted)
+        {
+            _loadLocales.Wait();
+        }
+        SelectVoice();
+        _silence ??= new();
+        TextToSpeech.Default.SpeakAsync(text, _ttsOptions,
+            cancelToken: _silence.Token);
+    }
 
-    private void SpeakPhrase(CancellationToken stoppingToken)
+    private void SelectVoice()
+    {
+        if (!_loadLocales.IsCompleted)
+        {
+            _loadLocales.Wait();
+        }
+        _ttsOptions.Locale = _esLocales![
+            _random.Next(0, _esLocales.Length)
+        ];
+        _logger.LogInformation("Selected voice: {voice}, language = {language}, country = {country}",
+            _ttsOptions.Locale.Name,
+            _ttsOptions.Locale.Language,
+            _ttsOptions.Locale.Country);
+    }
+
+    private void SpeakPhrase()
     {
         if (!EnableAphorisms)
         {
             return;
         }
 
-        stoppingToken.Register(_synth.SpeakAsyncCancelAll);
         // move all items in _next stack to _previous
         var next = _next.ToArray();
         _next.Clear();
@@ -619,15 +553,20 @@ public class Announcer : BackgroundService, IAnnouncer
         SendMessage(phrase);
     }
 
+    private void SendMessage(Frase f)
+    {
+        // sends chosen phrase
+        WeakReferenceMessenger.Default
+            .Send(new PhrasePickedMessage(f));
+        _logger.LogInformation("PhrasePickedMessage sent.");
+
+        SpeakPhrase(f);
+    }
+
     public override void Dispose()
     {
         _previous.Clear();
         _next.Clear();
-        _bells?.Dispose();
-        _cucaracha?.Dispose();
-        _cucu?.Dispose();
-        _synth?.Dispose();
-#pragma warning restore CA1416
         base.Dispose();
         GC.SuppressFinalize(this);
     }

@@ -17,6 +17,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using CUClock.Shared.Helpers;
+using Plugin.Maui.Audio;
 
 namespace CUClock.Windows;
 
@@ -111,6 +112,8 @@ public partial class App : Application
                         return fullPath;
                     }
                 });
+
+                services.AddTransient(_ => AudioManager.Current);
 
                 // Views and ViewModels
                 services.AddTransient<SettingsViewModel>();

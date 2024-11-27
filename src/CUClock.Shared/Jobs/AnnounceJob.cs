@@ -25,7 +25,7 @@ internal class AnnounceJob : JobBase
             context.FireTimeUtc.ToLocalTime().TimeOfDay);
 
         logger.LogInformation("Calling Scheduler delegate...");
-        announcer.GetScheduleFor(cronExpr)(announcer.SilenceToken);
+        announcer.GetScheduleFor(cronExpr)();
         logger.LogInformation("Delegate call finished...");
         return Task.CompletedTask;
     }

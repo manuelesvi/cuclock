@@ -4,18 +4,15 @@
              xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
              x:Class="CUClock.Maui.Views.TimeDisplayPage"
              x:DataType="vm:TimeDisplayViewModel">
-    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+    <Grid RowDefinitions="*,Auto,Auto,Auto"
           ColumnDefinitions="50*,50*" Margin="10">
-        <Label x:Name="CaptionText"
-               FontSize="18" Margin="0,0,0,10"
-               Grid.ColumnSpan="2" HorizontalTextAlignment="Center" />
-
+        
         <Editor x:Name="PhraseBox"
-                Grid.Row="1"  Grid.ColumnSpan="2"
+                Grid.Row="0"  Grid.ColumnSpan="2"
                 VerticalOptions="Fill" />
 
         <StackLayout Orientation="Horizontal" HorizontalOptions="Start"
-                     Grid.Row="2" Grid.Column="0">
+                     Grid.Row="1" Grid.Column="0">
             <Switch x:Name="msToggle"
                     Toggled="MsToggle_Toggled"
                     IsToggled="{Binding MillisecondSwitch}" />
@@ -23,7 +20,7 @@
         </StackLayout>
 
         <StackLayout Orientation="Horizontal"
-                     Grid.Row="2" Grid.Column="1">
+                     Grid.Row="1" Grid.Column="1">
             <Switch x:Name="aforismoToggle"
                     Toggled="AforismoToggle_Toggled"
                     IsToggled="{Binding AphorismSwitch}" />
@@ -31,7 +28,7 @@
         </StackLayout>
 
         <StackLayout Orientation="Horizontal"
-                     Grid.Row="3" Grid.Column="0">
+                     Grid.Row="2" Grid.Column="0">
             <Switch x:Name="galloToggle"
                     Toggled="GalloToggle_Toggled"
                     IsToggled="{Binding GalloSwitch}" />
@@ -39,7 +36,7 @@
         </StackLayout>
 
         <FlexLayout JustifyContent="End" Wrap="Wrap" Padding="5"
-            Grid.Row="4" Grid.ColumnSpan="2">
+            Grid.Row="3" Grid.ColumnSpan="2">
             <Button Text="Silencio" Command="{Binding Silence}" Margin="3,5" />
             <Button Text="Anunciar" Command="{Binding Announce}" Margin="3,5" />
             <Button Text="{Binding AnteriorText}" Command="{Binding Previous}" Margin="3,5" />

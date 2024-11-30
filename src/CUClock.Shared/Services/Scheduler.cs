@@ -48,16 +48,16 @@ public class Scheduler : IScheduler
         var jobNumber = 0;
         foreach (var entry in jobs)
         {
-            if (!await RegisterJob(++jobNumber, entry))
+            if (!await RegisterJob(++jobNumber, entry.Key))
             {
                 --jobNumber;
             }
         }
     }
 
-    private async Task<bool> RegisterJob(int jobNumber, KeyValuePair<CronExpression, Announcer.Schedule> entry)
+    private async Task<bool> RegisterJob(int jobNumber, CronExpression cron)
     {
-        var expression = ParseCRONExpression(entry.Key.ToString());
+        var expression = ParseCRONExpression(cron.ToString());
         _logger.LogInformation("Creating job detail and trigger for {cronExpr}",
             expression);
         try

@@ -44,7 +44,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
         MillisecondSwitch = true;
         GalloSwitch = true;
         AphorismSwitch = true;
-        
+
         Silence = new RelayCommand(() => _announcer.Silence());
         SpeakPhrase = new RelayCommand(() =>
         {
@@ -77,6 +77,9 @@ public partial class TimeDisplayViewModel : BaseViewModel
     {
         AnteriorText = string.Format("Anterior ({0})", _announcer.PreviousCount);
         SiguienteText = string.Format("Siguiente ({0})", _announcer.NextCount);
+        
+        Next.NotifyCanExecuteChanged();
+        Previous.NotifyCanExecuteChanged();
     }
 
     /// <summary>

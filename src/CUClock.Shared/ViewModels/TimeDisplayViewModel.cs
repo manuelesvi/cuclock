@@ -44,7 +44,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
         MillisecondSwitch = true;
         GalloSwitch = true;
         AphorismSwitch = true;
-        UpdateTexts();
+        
         Silence = new RelayCommand(() => _announcer.Silence());
         SpeakPhrase = new RelayCommand(() =>
         {
@@ -70,6 +70,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
                 (MessageHandler<object, PhrasePickedMessage>)(
                 (_, message) => Frase = message.Value));
         }
+        UpdateTexts();
     }
 
     private void UpdateTexts()

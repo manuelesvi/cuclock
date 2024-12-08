@@ -501,7 +501,8 @@ public class Announcer : BackgroundService, IAnnouncer
             return;
         }
         using var player = _audioManager.CreateAsyncPlayer(
-            await FileSystem.OpenAppPackageFileAsync(Path.Combine("WAVs", wavFile)));
+            await FileSystem.OpenAppPackageFileAsync(
+                filename: Path.Combine("WAVs", wavFile)));
         await player.PlayAsync(_silence!.Token);
     }
 

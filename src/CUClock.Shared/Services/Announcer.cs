@@ -240,7 +240,7 @@ public class Announcer : BackgroundService, IAnnouncer
         }
         var f = _previous.Pop();
         _next.Push(f);
-        SendMessage(f);
+        SendMessage(f); // previous one
     }
 
     public void Next()
@@ -251,7 +251,7 @@ public class Announcer : BackgroundService, IAnnouncer
         }
         var f = _next.Pop();
         _previous.Push(f);
-        SendMessage(f);
+        SendMessage(f); // next one
     }
 
     public Schedule GetScheduleFor(string cronExpression)
@@ -550,7 +550,7 @@ public class Announcer : BackgroundService, IAnnouncer
 
         var phrase = _phraseProvider.GetRandomPhrase(_random);
         _previous.Push(phrase);
-        SendMessage(phrase);
+        SendMessage(phrase); // new one
     }
 
     private void SendMessage(Frase f)

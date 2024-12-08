@@ -45,12 +45,18 @@ public partial class TimeDisplayViewModel : BaseViewModel
         GalloSwitch = true;
         AphorismSwitch = true;
 
-        Silence = new RelayCommand(() => _announcer.Silence());
+        Silence = new RelayCommand(() =>
+            _announcer.Silence());
+
         SpeakPhrase = new RelayCommand(() =>
         {
             _announcer.SpeakPhrase(GalloSwitch);
             UpdateTexts();
         });
+
+        Repeat = new RelayCommand(() =>
+            _announcer.SpeakPhrase(Frase));
+
         Previous = new RelayCommand(() =>
         {
             _announcer.Previous();
@@ -67,8 +73,8 @@ public partial class TimeDisplayViewModel : BaseViewModel
             .IsRegistered<PhrasePickedMessage>(this))
         {
             WeakReferenceMessenger.Default.Register(this,
-                (MessageHandler<object, PhrasePickedMessage>)(
-                (_, message) => Frase = message.Value));
+                (MessageHandler<object, PhrasePickedMessage>)((_, message) =>
+                    Frase = message.Value));
         }
         UpdateTexts();
     }

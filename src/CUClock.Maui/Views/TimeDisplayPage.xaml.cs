@@ -2,6 +2,7 @@
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Shared.ViewModels;
+using Microsoft.Extensions.Logging;
 
 namespace CUClock.Maui.Views;
 
@@ -19,6 +20,15 @@ public partial class TimeDisplayPage : ContentPage
         var services = App.Current!.Handler.GetServiceProvider();
         var vm = services.GetService<TimeDisplayViewModel>();
         BindingContext = vm;
+#if DEBUG
+        var logger = services.GetService<ILogger<TimeDisplayPage>>();
+        vm!.Next.CanExecuteChanged += (_, _) =>
+            logger!.LogInformation("Next changed CanExecute to: {canExecute}",
+                vm.Next.CanExecute(null));
+        vm.Previous.CanExecuteChanged += (_, _) =>
+            logger!.LogInformation("Previous changed CanExecute to: {canExecute}",
+                vm.Previous.CanExecute(null));
+#endif
     }
 
     private void RegisterMessageRecipient()

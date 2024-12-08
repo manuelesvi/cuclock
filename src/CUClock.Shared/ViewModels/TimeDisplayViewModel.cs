@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -51,7 +52,7 @@ public partial class TimeDisplayViewModel : BaseViewModel
         SpeakPhrase = new RelayCommand(() =>
         {
             _announcer.SpeakPhrase(GalloSwitch);
-            UpdateTexts();
+            UpdateTexts(nameof(SpeakPhrase));
         });
 
         Repeat = new RelayCommand(() =>
@@ -60,15 +61,17 @@ public partial class TimeDisplayViewModel : BaseViewModel
         Previous = new RelayCommand(() =>
         {
             _announcer.Previous();
-            UpdateTexts();
+            UpdateTexts(nameof(Previous));
         }, () => _announcer.PreviousCount > 0);
+
         Next = new RelayCommand(() =>
         {
             _announcer.Next();
-            UpdateTexts();
+            UpdateTexts(nameof(Next));
         }, () => _announcer.NextCount > 0);
 
-        Repeat = new RelayCommand(() => _announcer.SpeakPhrase(Frase));
+        UpdateTexts();
+
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
         {
@@ -76,14 +79,15 @@ public partial class TimeDisplayViewModel : BaseViewModel
                 (MessageHandler<object, PhrasePickedMessage>)((_, message) =>
                     Frase = message.Value));
         }
-        UpdateTexts();
     }
 
-    private void UpdateTexts()
+    private void UpdateTexts([CallerMemberName] string callerName = "")
     {
+        _logger.LogInformation("UpdateTexts called from {callerName}", callerName);
+
         AnteriorText = string.Format("Anterior ({0})", _announcer.PreviousCount);
         SiguienteText = string.Format("Siguiente ({0})", _announcer.NextCount);
-        
+
         Next.NotifyCanExecuteChanged();
         Previous.NotifyCanExecuteChanged();
     }

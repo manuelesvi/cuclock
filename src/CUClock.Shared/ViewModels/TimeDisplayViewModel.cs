@@ -52,7 +52,6 @@ public partial class TimeDisplayViewModel : BaseViewModel
         SpeakPhrase = new RelayCommand(() =>
         {
             _announcer.SpeakPhrase(GalloSwitch);
-            UpdateTexts(nameof(SpeakPhrase));
         });
 
         Repeat = new RelayCommand(() =>
@@ -61,13 +60,11 @@ public partial class TimeDisplayViewModel : BaseViewModel
         Previous = new RelayCommand(() =>
         {
             _announcer.Previous();
-            UpdateTexts(nameof(Previous));
         }, () => _announcer.PreviousCount > 0);
 
         Next = new RelayCommand(() =>
         {
             _announcer.Next();
-            UpdateTexts(nameof(Next));
         }, () => _announcer.NextCount > 0);
 
         UpdateTexts();
@@ -75,21 +72,10 @@ public partial class TimeDisplayViewModel : BaseViewModel
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
         {
-            WeakReferenceMessenger.Default.Register(this,
-                (MessageHandler<object, PhrasePickedMessage>)((_, message) =>
-                    Frase = message.Value));
+            WeakReferenceMessenger.Default
+                .Register<PhrasePickedMessage>(this, (_, message) =>
+                    Frase = message.Value);
         }
-    }
-
-    private void UpdateTexts([CallerMemberName] string callerName = "")
-    {
-        _logger.LogInformation("UpdateTexts called from {callerName}", callerName);
-
-        AnteriorText = string.Format("Anterior ({0})", _announcer.PreviousCount);
-        SiguienteText = string.Format("Siguiente ({0})", _announcer.NextCount);
-
-        Next.NotifyCanExecuteChanged();
-        Previous.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -145,6 +131,17 @@ public partial class TimeDisplayViewModel : BaseViewModel
     {
         get; set;
     } = string.Empty;
+
+    public void UpdateTexts([CallerMemberName] string callerName = "")
+    {
+        _logger.LogInformation("UpdateTexts called from {callerName}", callerName);
+
+        AnteriorText = string.Format("Anterior ({0})", _announcer.PreviousCount);
+        SiguienteText = string.Format("Siguiente ({0})", _announcer.NextCount);
+
+        Next.NotifyCanExecuteChanged();
+        Previous.NotifyCanExecuteChanged();
+    }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {

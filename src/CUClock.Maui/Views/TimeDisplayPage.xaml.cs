@@ -15,11 +15,17 @@ public partial class TimeDisplayPage : ContentPage
         RegisterMessageRecipient();
     }
 
+    private new TimeDisplayViewModel BindingContext
+    {
+        get => (TimeDisplayViewModel)base.BindingContext;
+        set => base.BindingContext = value;
+    }
+
     private void SetupBindingContext()
     {
         var services = App.Current!.Handler.GetServiceProvider();
         var vm = services.GetService<TimeDisplayViewModel>();
-        BindingContext = vm;
+        BindingContext = vm!;
 #if DEBUG
         var logger = services.GetService<ILogger<TimeDisplayPage>>();
         vm!.Next.CanExecuteChanged += (_, _) =>
@@ -51,9 +57,10 @@ public partial class TimeDisplayPage : ContentPage
         sb.AppendLine();
         sb.AppendLine();
         sb.AppendLine(value.Texto);
-        _ = Dispatcher.Dispatch(() =>
+        /* run on the UI */ _ = Dispatcher.Dispatch(() =>
         {
             PhraseBox.Text = sb.ToString();
+            BindingContext.UpdateTexts();
         });
 
         //        var payload = string.Format(

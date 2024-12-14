@@ -189,13 +189,15 @@ public class Announcer : BackgroundService, IAnnouncer
 
     public void Announce(bool sayMilliseconds = true)
     {
-        _logger.LogInformation("Announce began execution. {time}", DateTime.Now.ToLongTimeString());
+        _logger.LogInformation("Announce began execution. {time}",
+            DateTime.Now.ToLongTimeString());
         _ = Task.Run(async () =>
         {
             CultureInfo.CurrentCulture = _mxCulture;
             CultureInfo.CurrentUICulture = _mxCulture;
             await SayCurrentTime(sayMilliseconds);
-            _logger.LogInformation("Announce executed. {time}", DateTime.Now.ToLongTimeString());
+            _logger.LogInformation("Announce executed. {time}",
+                DateTime.Now.ToLongTimeString());
         });
     }
 

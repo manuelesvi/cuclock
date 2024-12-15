@@ -21,6 +21,16 @@ public class Scheduler : IScheduler
         _buildScheduler = Task.Run(BuildScheduler);
     }
 
+    private async Task BuildScheduler()
+    {
+        var properties = new NameValueCollection();
+        _scheduler = await SchedulerBuilder.Create(properties)
+            .UseDefaultThreadPool(x => x.MaxConcurrency = 5)
+            .UseInMemoryStore()
+            .WithMisfireThreshold(TimeSpan.FromSeconds(60))
+            .BuildScheduler();
+    }
+
     public async Task Start()
     {
         ArgumentNullException.ThrowIfNull(_scheduler, nameof(_scheduler));
@@ -122,15 +132,5 @@ public class Scheduler : IScheduler
         }
         expression = exprBuilder.ToString() + "* ";
         return expression;
-    }
-
-    private async Task BuildScheduler()
-    {        
-        var properties = new NameValueCollection();
-        _scheduler = await SchedulerBuilder.Create(properties)
-            .UseDefaultThreadPool(x => x.MaxConcurrency = 5)
-            .UseInMemoryStore()
-            .WithMisfireThreshold(TimeSpan.FromSeconds(60))
-            .BuildScheduler();
     }
 }

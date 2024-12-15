@@ -1,6 +1,7 @@
 ﻿using Aphorismus.Shared.Services;
 using CommunityToolkit.Maui;
 using CUClock.Shared.Contracts.Services;
+using CUClock.Shared.Helpers;
 using CUClock.Shared.Services;
 using CUClock.Shared.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -41,7 +42,7 @@ public static class MauiProgram
         //    (Announcer)services.GetService<IAnnouncer>()!);
 
         var app = builder.Build();
-        Shared.Helpers.Dependencies.ServiceProvider = app.Services;
+        Dependencies.ServiceProvider = app.Services;
         return app;
     }
 }

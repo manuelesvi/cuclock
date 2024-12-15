@@ -57,9 +57,11 @@ public partial class TimeDisplayPage : ContentPage
         sb.AppendLine();
         sb.AppendLine();
         sb.AppendLine(value.Texto);
-        /* run on the UI */ _ = Dispatcher.Dispatch(() =>
+        var text = sb.ToString();
+        /* run on the UI */
+        _ = Dispatcher.Dispatch(() =>
         {
-            PhraseBox.Text = sb.ToString();
+            PhraseBox.Text = text;
             BindingContext.UpdateTexts();
         });
 

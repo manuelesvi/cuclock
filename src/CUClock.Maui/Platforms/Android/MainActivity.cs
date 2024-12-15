@@ -17,4 +17,10 @@ public class MainActivity : MauiAppCompatActivity
         App.StopScheduler();
         base.OnPause();
     }
+
+    protected override void OnStop()
+    {
+        App.StopScheduler();
+        base.OnStop();
+    }
 }

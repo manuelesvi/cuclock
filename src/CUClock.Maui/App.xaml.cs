@@ -26,6 +26,16 @@ public partial class App : Application
 
     private void Window_Resumed(object? sender, EventArgs e)
     {
+        StartScheduler();
+    }
+
+    private void Window_Stopped(object? sender, EventArgs e)
+    {
+        StopScheduler();
+    }
+
+    internal static void StartScheduler()
+    {
         var scheduler = Dependencies.ServiceProvider.GetService<IScheduler>();
         var logger = Dependencies.ServiceProvider.GetService<ILogger<App>>();
         logger!.LogInformation("Window Resumed: starting scheduler...");
@@ -33,7 +43,7 @@ public partial class App : Application
         logger!.LogInformation("Window Resumed: scheduler started.");
     }
 
-    private void Window_Stopped(object? sender, EventArgs e)
+    internal static void StopScheduler()
     {
         var scheduler = Dependencies.ServiceProvider.GetService<IScheduler>();
         var logger = Dependencies.ServiceProvider.GetService<ILogger<App>>();

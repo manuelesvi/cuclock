@@ -153,7 +153,8 @@ public class Announcer : BackgroundService, IAnnouncer
             await _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
             {
                 await _scheduler.Start();
-                _logger.LogInformation("Job Scheduler started on {time}...",
+                _logger.LogInformation(
+                    "Job Scheduler started on {time}...",
                     DateTime.Now.ToLongTimeString());
             });
         });

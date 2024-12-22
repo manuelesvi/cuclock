@@ -144,7 +144,8 @@ public class Announcer : BackgroundService, IAnnouncer
         {
             var locales = await TextToSpeech.Default.GetLocalesAsync();
             _esLocales = locales
-                .Where(l => l.Language.StartsWith(_mxCulture.TwoLetterISOLanguageName))
+                .Where(l => l.Language.StartsWith(
+                    _mxCulture.TwoLetterISOLanguageName))
                 .ToArray();
         });
 
@@ -213,7 +214,12 @@ public class Announcer : BackgroundService, IAnnouncer
     public void SpeakPhrase(bool conGallo)
     {
         Silence();
-        _silence = new CancellationTokenSource();
+        
+        ArgumentNullException.ThrowIfNull(_silence,
+            nameof(_silence));
+        ArgumentNullException.ThrowIfNull(_silence?.Token,
+            nameof(_silence.Token));
+
         _ = Task.Run(async () =>
         {
             if (conGallo)

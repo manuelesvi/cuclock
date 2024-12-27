@@ -41,7 +41,7 @@ public class Scheduler : IScheduler
 
         if (!_buildScheduler.IsCompleted)
         {
-        _buildScheduler.Wait();
+            _buildScheduler.Wait();
         }
 
         await _scheduler.Start(); // start it
@@ -117,9 +117,9 @@ public class Scheduler : IScheduler
     {
         var expression = "0 " + original;
         var exprBuilder = new StringBuilder();
-        var index = 0;
         var lastIndex = 0;
         var fieldNumber = 1;
+        int index;
         while ((index = expression.IndexOf(' ', lastIndex)) > -1)
         {
             var value = expression[lastIndex..index];

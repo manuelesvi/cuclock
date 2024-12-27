@@ -39,6 +39,8 @@ public class Scheduler : IScheduler
             return; // already started
         }
 
+        if (!_buildScheduler.IsCompleted)
+        {
         _buildScheduler.Wait();
         }
 

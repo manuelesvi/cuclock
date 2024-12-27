@@ -59,7 +59,7 @@ public class Scheduler : IScheduler
 
     public async Task RegisterJobs(IDictionary<CronExpression, Announcer.Schedule> jobs)
     {
-        var jobNumber = 0;
+        byte jobNumber = 0;
         foreach (var entry in jobs)
         {
             if (!await RegisterJob(++jobNumber, entry.Key))

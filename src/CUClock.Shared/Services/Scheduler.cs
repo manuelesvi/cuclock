@@ -36,11 +36,13 @@ public class Scheduler : IScheduler
         ArgumentNullException.ThrowIfNull(_scheduler, nameof(_scheduler));
         if (_scheduler.IsStarted)
         {
-            return;
+            return; // already started
         }
 
         _buildScheduler.Wait();
-        await _scheduler.Start();
+        }
+
+        await _scheduler.Start(); // start it
     }
 
     public async Task Stop()
@@ -50,7 +52,7 @@ public class Scheduler : IScheduler
         {
             return;
         }
-        await _scheduler.Standby();
+        await _scheduler.Standby(); // stops firing triggers
     }
 
     public async Task RegisterJobs(IDictionary<CronExpression, Announcer.Schedule> jobs)

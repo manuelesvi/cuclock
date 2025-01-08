@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Plugin.Maui.Audio;
 
 namespace CUClock.Maui;
+
 public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
@@ -24,8 +25,10 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
-        builder.AddAudio();
+        builder.AddAudio(); // NuGet: Plugin.Maui.Audio
+        
         var services = builder.Services;
+        // PhraseProvider
         services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
         {
             var logger = services.GetService<ILogger<PhraseProvider>>()!;
@@ -35,14 +38,21 @@ public static class MauiProgram
                 ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
             };
         });
+        
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddSingleton<IAnnouncer, Announcer>();
         services.AddTransient<TimeDisplayViewModel>();
+
+        // background processing is done by IScheduler,
+        // ExecuteAsync has become obsolete
+
         //services.AddHostedService(services =>
         //    (Announcer)services.GetService<IAnnouncer>()!);
 
         var app = builder.Build();
+
         Dependencies.ServiceProvider = app.Services;
+        
         return app;
     }
 }

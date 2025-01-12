@@ -83,7 +83,7 @@ public class Announcer : BackgroundService, IAnnouncer
     /// They are defined for each quarter of an hour
     /// and repeated every hour.
     /// </summary>
-    public delegate void Schedule();
+    public delegate Task Schedule();
 
     /// <summary>
     /// Mexican spanish <see cref="CultureInfo"/>.
@@ -407,7 +407,7 @@ public class Announcer : BackgroundService, IAnnouncer
         SpeakPhrase();
     }
 
-    private async void EnPunto()
+    private async Task EnPunto()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -437,7 +437,7 @@ public class Announcer : BackgroundService, IAnnouncer
         SpeakPhrase();
     }
 
-    private async void CuartoDeHora()
+    private async Task CuartoDeHora()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -449,7 +449,7 @@ public class Announcer : BackgroundService, IAnnouncer
         SpeakPhrase();
     }
 
-    private async void YMedia()
+    private async Task YMedia()
     {
         var hora = DateTime.Now.TimeOfDay.Hours < 13
             ? DateTime.Now.TimeOfDay.Hours
@@ -461,7 +461,7 @@ public class Announcer : BackgroundService, IAnnouncer
         SpeakPhrase();
     }
 
-    private async void CuartoPara()
+    private async Task CuartoPara()
     {
         var hora = DateTime.Now.TimeOfDay.Hours + 1 < 13
             ? DateTime.Now.TimeOfDay.Hours + 1

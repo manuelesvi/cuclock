@@ -67,6 +67,8 @@ public class Scheduler : IScheduler
                 --jobNumber;
             }
         }
+        _logger.LogInformation("{jobNumber} jobs scheduled.", jobNumber);
+        _logger.LogInformation("RegisterJobs execution finished.");
     }
 
     private async Task<bool> RegisterJob(int jobNumber, CronExpression cron)

@@ -10,7 +10,7 @@ internal class AnnounceJob : JobBase
 {
     public const string CRON_KEY = "cronExpr";
 
-    public override Task Execute(IJobExecutionContext context)
+    public async override Task Execute(IJobExecutionContext context)
     {
         ArgumentNullException.ThrowIfNull(Dependencies.ServiceProvider, nameof(Dependencies.ServiceProvider));
 
@@ -25,8 +25,7 @@ internal class AnnounceJob : JobBase
             context.FireTimeUtc.ToLocalTime().TimeOfDay);
 
         logger.LogInformation("Calling Scheduler delegate...");
-        announcer.GetScheduleFor(cronExpr)();
+        await announcer.GetScheduleFor(cronExpr)();
         logger.LogInformation("Delegate call finished...");
-        return Task.CompletedTask;
     }
 }

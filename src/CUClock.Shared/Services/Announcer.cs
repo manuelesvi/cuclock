@@ -95,6 +95,7 @@ public class Announcer : BackgroundService, IAnnouncer
     private readonly IScheduler _scheduler;
     private readonly ILogger<Announcer> _logger;
     private readonly IAudioManager _audioManager;
+    private readonly IFileService _fileService;
     private readonly Random _random = new();
 
     private const string BellsWAV = "bells.wav";
@@ -122,6 +123,7 @@ public class Announcer : BackgroundService, IAnnouncer
         IPhraseProvider phraseProvider,
         IScheduler scheduler,
         IAudioManager audioManager,
+        IFileService fileService,
         ILogger<Announcer> logger)
     {
         CultureInfo.CurrentCulture = _mxCulture;
@@ -130,6 +132,7 @@ public class Announcer : BackgroundService, IAnnouncer
         _phraseProvider = phraseProvider;
         _scheduler = scheduler;
         _audioManager = audioManager;
+        _fileService = fileService;
         _logger = logger;
 
         Schedules = new Dictionary<CronExpression, Schedule>
@@ -214,7 +217,7 @@ public class Announcer : BackgroundService, IAnnouncer
     public void SpeakPhrase(bool conGallo)
     {
         Silence();
-        
+
         ArgumentNullException.ThrowIfNull(_silence,
             nameof(_silence));
         ArgumentNullException.ThrowIfNull(_silence?.Token,
@@ -365,7 +368,7 @@ public class Announcer : BackgroundService, IAnnouncer
 
         return txt;
     }
-    
+
     private Schedule GetSchedule(int minutes) => minutes switch
     {
         0 => EnPunto,
@@ -557,7 +560,21 @@ public class Announcer : BackgroundService, IAnnouncer
             _previous.Push(item);
         }
 
-        var phrase = _phraseProvider.GetRandomPhrase(_random);
+        Frase phrase;
+        try
+        {
+            var contents = _fileService.Read<Dictionary<int, bool>>(".", "chapters.json");
+            var selected = contents
+                .Where(c => c.Value)
+                .Select(c => c.Key)
+                .ToArray();
+            phrase = _phraseProvider.GetRandomPhrase(_random, chapters: selected);
+        }
+        catch
+        {
+            phrase = _phraseProvider.GetRandomPhrase(_random);
+        }
+
         _previous.Push(phrase);
         SendMessage(phrase); // new one
     }

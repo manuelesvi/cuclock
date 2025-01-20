@@ -53,12 +53,6 @@ public partial class Chapters : BaseViewModel
 
     private void Load()
     {
-        var chapters = new List<ChapterDetail>();
-        var todos = new ChapterDetail(this,
-            new Capitulo { Nombre = "Todos" }, _logger);
-        todos.TodosSelected += Todos_TodosSelected;
-        chapters.Add(todos);
-
         Dictionary<int, bool> content;
         try
         {
@@ -68,6 +62,13 @@ public partial class Chapters : BaseViewModel
         {
             content = [];
         }
+
+        var todosSelected = content.All(x => x.Value);
+        var chapters = new List<ChapterDetail>();
+        var todos = new ChapterDetail(this,
+            new Capitulo { Nombre = "Todos" }, _logger, todosSelected);
+        todos.TodosSelected += Todos_TodosSelected;
+        chapters.Add(todos);
 
         for (var i = 0; i < _phraseProvider.NumberOfChapters; i++)
         {

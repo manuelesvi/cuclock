@@ -37,12 +37,27 @@
 
         <FlexLayout JustifyContent="End" Wrap="Wrap" Padding="5"
             Grid.Row="3" Grid.ColumnSpan="2">
-            <Button Text="Silencio" Command="{Binding Silence}" Margin="3,5" />
-            <Button Text="Anunciar" Command="{Binding Announce}" Margin="3,5" />
-            <Button Text="{Binding AnteriorText}" Command="{Binding Previous}" Margin="3,5" />
-            <Button Text="Aforismo" Command="{Binding SpeakPhrase}" Margin="3,5" />
-            <Button Text="Repetir" Command="{Binding Repeat}" Margin="3,5" />
-            <Button Text="{Binding SiguienteText}" Command="{Binding Next}" Margin="3,5" />
+            <Button Text="Silencio" 
+                    Command="{Binding Silence}"
+                    Margin="3,5" />
+            <Button Text="Anunciar" 
+                    Command="{Binding Announce}"
+                    Margin="3,5" />
+            
+            <Button Text="{Binding AnteriorText}"
+                    Command="{Binding Previous}"
+                    Margin="3,5" />
+            
+            <Button Text="Aforismo"
+                    Command="{Binding SpeakPhrase}"
+                    Margin="3,5" />
+            <Button Text="Repetir"
+                    Command="{Binding Repeat}"
+                    Margin="3,5" />
+            
+            <Button Text="{Binding SiguienteText}"
+                    Command="{Binding Next}"
+                    Margin="3,5" />
         </FlexLayout>
     </Grid>
 </ContentPage>

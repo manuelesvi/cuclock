@@ -41,8 +41,10 @@ public static class MauiProgram
         
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddSingleton<IAnnouncer, Announcer>();
+        services.AddTransient<IFileService, FileService>();
         services.AddTransient<TimeDisplayViewModel>();
         services.AddTransient<Chapters>();
+
 
         // background processing is done by IScheduler,
         // ExecuteAsync has become obsolete

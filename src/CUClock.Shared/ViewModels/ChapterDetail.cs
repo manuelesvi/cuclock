@@ -5,11 +5,18 @@ using Microsoft.Extensions.Logging;
 
 namespace CUClock.Shared.ViewModels;
 
-public partial class ChapterDetail(Capitulo model,
+public partial class ChapterDetail(Chapters parent,
+    Capitulo model,
     ILogger logger) : ObservableRecipient
 {
     [ObservableProperty]
     private bool _isSelected = true;
+
+    public ChapterDetail(Chapters parent, Capitulo model, ILogger logger, bool isSelected)
+        : this(parent, model, logger)
+    {
+        _isSelected = isSelected;
+    }
 
     public int NumeroCapitulo => model.NumeroCapitulo;
 
@@ -21,12 +28,19 @@ public partial class ChapterDetail(Capitulo model,
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(IsSelected) && NumeroCapitulo == 0)
+        if (e.PropertyName == nameof(IsSelected))
         {
-            logger.LogInformation(
-                "Todos changed, triggering {event}. IsSelected = {isSelected}",
-                nameof(TodosSelected), IsSelected);
-            TodosSelected?.Invoke(this, new TodosSelectedEventArgs(IsSelected));
+            if (NumeroCapitulo == 0)
+            {
+                logger.LogInformation(
+                    "Todos changed, triggering {event}. IsSelected = {isSelected}",
+                    nameof(TodosSelected), IsSelected);
+                TodosSelected?.Invoke(this, new TodosSelectedEventArgs(IsSelected));
+            }
+            else
+            {
+                parent.Save();
+            }
         }
         base.OnPropertyChanged(e);
     }

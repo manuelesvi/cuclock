@@ -14,7 +14,7 @@
     <Grid ColumnDefinitions="*"
           RowDefinitions="Auto,*" Padding="5,5,10,5">
         <Label
-            Text="Seleccione los temas a incluir: "
+            Text="Seleccione los temas a incluir: " FontSize="Medium"
             VerticalOptions="Center" 
             HorizontalOptions="Center" />
         <ScrollView Grid.Row="1">

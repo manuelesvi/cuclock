@@ -1,15 +1,16 @@
 ﻿using System.Text;
 
 using CUClock.Shared.Contracts.Services;
-
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace CUClock.Shared.Services;
 
-public class FileService : IFileService
-{
+public class FileService(ILogger<FileService> logger) : IFileService
+{    
     public T Read<T>(string folderPath, string fileName)
     {
+        logger.LogInformation("Reading file '{fileName}' from '{folderPath}'", fileName, folderPath);
         var path = Path.Combine(folderPath, fileName);
         if (File.Exists(path))
         {
@@ -22,6 +23,7 @@ public class FileService : IFileService
 
     public void Save<T>(string folderPath, string fileName, T content)
     {
+        logger.LogInformation("Saving file '{fileName}' to '{folderPath}'", fileName, folderPath);
         if (!Directory.Exists(folderPath))
         {
             Directory.CreateDirectory(folderPath);

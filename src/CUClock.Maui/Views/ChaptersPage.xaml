@@ -2,11 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
-             xmlns:entities="clr-namespace:Aphorismus.Shared.Entities;assembly=Aphorismus.Shared"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="CUClock.Maui.Views.ChaptersPage"
              x:DataType="vm:Chapters" Title="Temas">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <Grid ColumnDefinitions="*"
-          RowDefinitions="Auto,*">
+          RowDefinitions="Auto,*" Padding="5,5,10,5">
         <Label
             Text="Seleccione los temas a incluir: "
             VerticalOptions="Center" 
@@ -16,14 +22,22 @@
                       ItemsSource="{Binding Items}"
                       SelectionMode="None">
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="entities:Capitulo">
+                    <DataTemplate x:DataType="vm:ChapterDetail">
                         <ViewCell>
                             <StackLayout Orientation="Horizontal" Spacing="5">
-                                <Label Text="{Binding NumeroCapitulo}" WidthRequest="40"
+                                <Label Text="{Binding NumeroCapitulo}"
+                                       IsVisible="{Binding IsChapterNumVisible}"
+                                       WidthRequest="40"
                                        HorizontalTextAlignment="End" 
                                        VerticalTextAlignment="Center" />
-                                <Switch IsToggled="True" />
-                                <!--IsToggled="{Binding IsSelected}"-->
+
+                                <Label Text="*"
+                                       IsVisible="{Binding IsChapterNumVisible, Converter={StaticResource InvertedBoolConverter}}"
+                                       WidthRequest="40" HorizontalTextAlignment="End" 
+                                       VerticalTextAlignment="Center" />
+
+                                <Switch IsToggled="{Binding IsSelected}" />
+
                                 <Label Text="{Binding Nombre}"
                                        VerticalTextAlignment="Center" />
                             </StackLayout>

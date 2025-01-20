@@ -11,6 +11,8 @@ public class FileService(ILogger<FileService> logger) : IFileService
     public T Read<T>(string folderPath, string fileName)
     {
         logger.LogInformation("Reading file '{fileName}' from '{folderPath}'", fileName, folderPath);
+        logger.LogInformation("Current directory: {dir}", Directory.GetCurrentDirectory());
+
         var path = Path.Combine(folderPath, fileName);
         if (File.Exists(path))
         {
@@ -24,6 +26,8 @@ public class FileService(ILogger<FileService> logger) : IFileService
     public void Save<T>(string folderPath, string fileName, T content)
     {
         logger.LogInformation("Saving file '{fileName}' to '{folderPath}'", fileName, folderPath);
+        logger.LogInformation("Current directory: {dir}", Directory.GetCurrentDirectory());
+
         if (!Directory.Exists(folderPath))
         {
             Directory.CreateDirectory(folderPath);

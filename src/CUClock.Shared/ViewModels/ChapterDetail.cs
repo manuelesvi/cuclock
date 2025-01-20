@@ -1,18 +1,12 @@
 ﻿using System.ComponentModel;
 using Aphorismus.Shared.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
 
 namespace CUClock.Shared.ViewModels;
 
-public sealed class TodosSelectedEventArgs(bool isSelected) : EventArgs
-{
-    public bool IsSelected
-    {
-        get; set;
-    } = isSelected;
-}
-
-public partial class ChapterDetail(Capitulo model) : ObservableRecipient
+public partial class ChapterDetail(Capitulo model,
+    ILogger logger) : ObservableRecipient
 {
     [ObservableProperty]
     private bool _isSelected = true;
@@ -29,8 +23,9 @@ public partial class ChapterDetail(Capitulo model) : ObservableRecipient
     {
         if (e.PropertyName == nameof(IsSelected) && NumeroCapitulo == 0)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"Chapter '{Nombre}' is selected: {IsSelected}");
+            logger.LogInformation(
+                "Todos changed, triggering {event}. IsSelected = {isSelected}",
+                nameof(TodosSelected), IsSelected);
             TodosSelected?.Invoke(this, new TodosSelectedEventArgs(IsSelected));
         }
         base.OnPropertyChanged(e);

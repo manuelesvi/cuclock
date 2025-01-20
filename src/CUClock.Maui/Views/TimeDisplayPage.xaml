@@ -6,17 +6,18 @@
              x:DataType="vm:TimeDisplayViewModel">
     <Grid RowDefinitions="*,Auto,Auto,Auto"
           ColumnDefinitions="50*,50*" Margin="10">
-        
+
         <Editor x:Name="PhraseBox"
                 Grid.Row="0"  Grid.ColumnSpan="2"
                 VerticalOptions="Fill" />
 
-        <StackLayout Orientation="Horizontal" HorizontalOptions="Start"
+        <StackLayout Orientation="Horizontal"
                      Grid.Row="1" Grid.Column="0">
             <Switch x:Name="msToggle"
                     Toggled="MsToggle_Toggled"
                     IsToggled="{Binding MillisecondSwitch}" />
-            <Label x:Name="msLabel" Text="Con milisegundos" />
+            <Label x:Name="msLabel" Text="Con milisegundos" 
+                   VerticalTextAlignment="Center" />
         </StackLayout>
 
         <StackLayout Orientation="Horizontal"
@@ -24,7 +25,8 @@
             <Switch x:Name="aforismoToggle"
                     Toggled="AforismoToggle_Toggled"
                     IsToggled="{Binding AphorismSwitch}" />
-            <Label x:Name="aforismoLabel" Text="Con aforismo" />
+            <Label x:Name="aforismoLabel" Text="Con aforismo"
+                   VerticalTextAlignment="Center" />
         </StackLayout>
 
         <StackLayout Orientation="Horizontal"
@@ -32,7 +34,8 @@
             <Switch x:Name="galloToggle"
                     Toggled="GalloToggle_Toggled"
                     IsToggled="{Binding GalloSwitch}" />
-            <Label x:Name="galloLabel" Text="Con gallo" />
+            <Label x:Name="galloLabel" Text="Con gallo"
+                   VerticalTextAlignment="Center" />
         </StackLayout>
 
         <FlexLayout JustifyContent="End" Wrap="Wrap" Padding="5"
@@ -43,18 +46,18 @@
             <Button Text="Anunciar" 
                     Command="{Binding Announce}"
                     Margin="3,5" />
-            
+
             <Button Text="{Binding AnteriorText}"
                     Command="{Binding Previous}"
                     Margin="3,5" />
-            
+
             <Button Text="Aforismo"
                     Command="{Binding SpeakPhrase}"
                     Margin="3,5" />
             <Button Text="Repetir"
                     Command="{Binding Repeat}"
                     Margin="3,5" />
-            
+
             <Button Text="{Binding SiguienteText}"
                     Command="{Binding Next}"
                     Margin="3,5" />

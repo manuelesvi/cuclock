@@ -12,6 +12,11 @@
             Title="Aforismos"
             ContentTemplate="{DataTemplate local:TimeDisplayPage}"
             Route="TimeDisplay" />
+
+        <ShellContent 
+            Title="Capítulos"
+            ContentTemplate="{DataTemplate local:ChaptersPage}"
+            Route="Chapters" />
     </FlyoutItem>
 
 </Shell>

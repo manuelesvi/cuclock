@@ -3,7 +3,7 @@ using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CUClock.Shared.Contracts.Services;
 using Microsoft.Extensions.Logging;
-using Quartz.Logging;
+using Microsoft.Maui.Storage;
 
 namespace CUClock.Shared.ViewModels;
 
@@ -48,7 +48,8 @@ public partial class Chapters : BaseViewModel
             content[d.NumeroCapitulo] = d.IsSelected;
         }
 
-        _fileService.Save(".", FileName, content);
+        _fileService.Save(FileSystem.Current.AppDataDirectory,
+            FileName, content);
     }
 
     private void Load()
@@ -56,7 +57,8 @@ public partial class Chapters : BaseViewModel
         Dictionary<int, bool> content;
         try
         {
-            content = _fileService.Read<Dictionary<int, bool>>(".", FileName);
+            content = _fileService.Read<Dictionary<int, bool>>(
+                FileSystem.Current.AppDataDirectory, FileName) ?? [];
         }
         catch
         {
@@ -76,10 +78,13 @@ public partial class Chapters : BaseViewModel
             {
                 NumeroCapitulo = i + 1,
                 Nombre = _phraseProvider.GetChapterName(i + 1)
-            }, _logger, content[i + 1]));
+            }, _logger, GetSelectionState(i + 1)));
         }
         chapters.Add(todos);
         Items = chapters;
+
+        bool GetSelectionState(int chapter)
+            => content.ContainsKey(chapter) && content[chapter];
     }
 
     private void Todos_TodosSelected(object sender, TodosSelectedEventArgs e)

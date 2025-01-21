@@ -563,7 +563,8 @@ public class Announcer : BackgroundService, IAnnouncer
         Frase phrase;
         try
         {
-            var contents = _fileService.Read<Dictionary<int, bool>>(".", "chapters.json");
+            var contents = _fileService.Read<Dictionary<int, bool>>(
+                    FileSystem.Current.AppDataDirectory, "chapters.json");
             var selected = contents
                 .Where(c => c.Value)
                 .Select(c => c.Key)

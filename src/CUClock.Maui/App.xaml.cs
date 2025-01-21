@@ -1,4 +1,5 @@
-﻿using CUClock.Shared.Contracts.Services;
+﻿using System.Diagnostics;
+using CUClock.Shared.Contracts.Services;
 using CUClock.Shared.Helpers;
 using Microsoft.Extensions.Logging;
 
@@ -35,8 +36,8 @@ public partial class App : Application
             Title = "CUClock, cu cu.",
         };
 
-        window.Stopped += Window_Stopped;
-        window.Resumed += Window_Resumed;
+        //window.Stopped += Window_Stopped;
+        //window.Resumed += Window_Resumed;
 
         return window;
     }
@@ -48,6 +49,7 @@ public partial class App : Application
 
     private void Window_Stopped(object? sender, EventArgs e)
     {
-        StopScheduler();
+        Debugger.Break();
+        //StopScheduler();
     }
 }

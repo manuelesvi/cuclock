@@ -74,17 +74,18 @@ public partial class Chapters : BaseViewModel
 
         for (var i = 0; i < _phraseProvider.NumberOfChapters; i++)
         {
+            var chapter = i + 1;
             chapters.Add(new ChapterDetail(this, new Capitulo
             {
-                NumeroCapitulo = i + 1,
-                Nombre = _phraseProvider.GetChapterName(i + 1)
-            }, _logger, GetSelectionState(i + 1)));
+                NumeroCapitulo = chapter,
+                Nombre = _phraseProvider.GetChapterName(chapter)
+            }, _logger, GetSelectionState(chapter)));
         }
         chapters.Add(todos);
         Items = chapters;
 
         bool GetSelectionState(int chapter)
-            => content.ContainsKey(chapter) && content[chapter];
+            => !content.ContainsKey(chapter) || content[chapter];
     }
 
     private void Todos_TodosSelected(object sender, TodosSelectedEventArgs e)

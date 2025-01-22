@@ -18,6 +18,7 @@ public class Scheduler : IScheduler
     public Scheduler(ILogger<IScheduler> logger)
     {
         _logger = logger;
+        // start on a background thread
         _buildScheduler = Task.Run(BuildScheduler);
     }
 
@@ -39,6 +40,7 @@ public class Scheduler : IScheduler
             return; // already started
         }
 
+        // wait for the scheduler to be built
         if (!_buildScheduler.IsCompleted)
         {
             _buildScheduler.Wait();
@@ -54,7 +56,7 @@ public class Scheduler : IScheduler
         {
             return;
         }
-        await _scheduler.Standby(); // stops firing triggers
+        await _scheduler.Standby(); // stop firing triggers
     }
 
     public async Task RegisterJobs(IDictionary<CronExpression, Announcer.Schedule> jobs)
@@ -93,7 +95,7 @@ public class Scheduler : IScheduler
             {
                 _buildScheduler.Wait();
             }
-            await _scheduler.ScheduleJob(jobDetail, trigger); // associated
+            await _scheduler.ScheduleJob(jobDetail, trigger); // associate
 
             _logger.LogInformation("Job #{jobNumber} scheduled with CRON expression: {expr}",
                 jobNumber, expression);

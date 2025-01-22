@@ -21,10 +21,15 @@ stages:          # List of stages for jobs, and their order of execution
 #  - test
 #  - deploy
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
     - echo "Compiling the code..."
+    - dotnet clean
+    - dotnet restore
     - dotnet build src/CUClock.sln
     - echo "Compile complete."
 

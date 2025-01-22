@@ -12,12 +12,15 @@
     </ContentPage.Resources>
 
     <Grid ColumnDefinitions="*"
-          RowDefinitions="Auto,*" Padding="5,5,10,5">
+          RowDefinitions="Auto,Auto,*" Padding="5,5,10,5">
         <Label
             Text="Seleccione los temas a incluir: " FontSize="Medium"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-        <ScrollView Grid.Row="1">
+            VerticalOptions="Center" HorizontalOptions="Center"
+            Padding="0,0,0,10" />
+        <Line X2="300"
+            Stroke="{StaticResource Primary}" StrokeThickness="4"
+              Grid.Row="1" HorizontalOptions="Center"/>
+        <ScrollView Grid.Row="2">
             <ListView x:Name="ChaptersList"
                       ItemsSource="{Binding Items}"
                       SelectionMode="None">

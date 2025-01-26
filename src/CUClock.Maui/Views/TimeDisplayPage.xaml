@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
              x:Class="CUClock.Maui.Views.TimeDisplayPage"
-             x:DataType="vm:TimeDisplayViewModel">
+             x:DataType="vm:Announcer">
     <Grid RowDefinitions="*,Auto,Auto,Auto"
           ColumnDefinitions="50*,50*" Margin="10">
 

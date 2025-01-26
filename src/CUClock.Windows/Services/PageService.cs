@@ -15,7 +15,7 @@ public class PageService : IPageService
 
     public PageService()
     {
-        Configure<TimeDisplayViewModel, TimeDisplayPage>();
+        Configure<Announcer, TimeDisplayPage>();
         Configure<SettingsViewModel, SettingsPage>();
     }
 

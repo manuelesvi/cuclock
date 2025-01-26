@@ -15,16 +15,16 @@ public partial class TimeDisplayPage : ContentPage
         RegisterMessageRecipient();
     }
 
-    private new TimeDisplayViewModel BindingContext
+    private new Announcer BindingContext
     {
-        get => (TimeDisplayViewModel)base.BindingContext;
+        get => (Announcer)base.BindingContext;
         set => base.BindingContext = value;
     }
 
     private void SetupBindingContext()
     {
         var services = App.Current!.Handler.GetServiceProvider();
-        var vm = services.GetService<TimeDisplayViewModel>();
+        var vm = services.GetService<Announcer>();
         BindingContext = vm!;
 #if DEBUG
         var logger = services.GetService<ILogger<TimeDisplayPage>>();

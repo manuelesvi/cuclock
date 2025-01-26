@@ -14,7 +14,7 @@ public sealed partial class TimeDisplayPage : Page
 {
     public TimeDisplayPage()
     {
-        ViewModel = App.GetService<TimeDisplayViewModel>();
+        ViewModel = App.GetService<Announcer>();
         InitializeComponent();
         if (!WeakReferenceMessenger.Default
             .IsRegistered<PhrasePickedMessage>(this))
@@ -29,7 +29,7 @@ public sealed partial class TimeDisplayPage : Page
         aforismoToggle.Toggled += (_, _) => ViewModel.AphorismSwitch = aforismoToggle.IsOn;
     }
 
-    public TimeDisplayViewModel ViewModel
+    public Announcer ViewModel
     {
         get;
     }

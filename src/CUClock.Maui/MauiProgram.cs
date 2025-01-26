@@ -4,6 +4,7 @@ using CUClock.Shared.Contracts.Services;
 using CUClock.Shared.Helpers;
 using CUClock.Shared.Services;
 using CUClock.Shared.ViewModels;
+using AnnouncerVM = CUClock.Shared.ViewModels.Announcer;
 using Microsoft.Extensions.Logging;
 using Plugin.Maui.Audio;
 
@@ -40,9 +41,9 @@ public static class MauiProgram
         });
         
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
-        services.AddSingleton<IAnnouncer, Announcer>();
+        services.AddSingleton<IAnnouncer, Shared.Services.Announcer>();
         services.AddTransient<IFileService, FileService>();
-        services.AddTransient<TimeDisplayViewModel>();
+        services.AddTransient<AnnouncerVM>();
         services.AddTransient<Chapters>();
 
 

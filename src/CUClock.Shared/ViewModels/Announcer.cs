@@ -11,12 +11,12 @@ using Microsoft.Extensions.Logging;
 namespace CUClock.Shared.ViewModels;
 
 /// <summary>
-/// ViewModel for TimeDisplay view.
+/// Announces time and aphorism from Tolstoi's book.
 /// </summary>
-public partial class TimeDisplayViewModel : BaseViewModel
+public partial class Announcer : BaseViewModel
 {
     private readonly IAnnouncer _announcer;
-    private readonly ILogger<TimeDisplayViewModel> _logger;
+    private readonly ILogger<Announcer> _logger;
 
     [ObservableProperty]
     private bool _millisecondSwitch;
@@ -36,13 +36,13 @@ public partial class TimeDisplayViewModel : BaseViewModel
     [ObservableProperty]
     private string _siguienteText;
 
-    public TimeDisplayViewModel(IAnnouncer announcer,
-        ILogger<TimeDisplayViewModel> logger)
+    public Announcer(IAnnouncer announcer,
+        ILogger<Announcer> logger)
     {
         _announcer = announcer;
         _logger = logger;
 
-        MillisecondSwitch = true;
+        MillisecondSwitch = false;
         GalloSwitch = true;
         AphorismSwitch = true;
 

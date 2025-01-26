@@ -118,7 +118,7 @@ public partial class App : Application
                 // Views and ViewModels
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<SettingsPage>();
-                services.AddTransient<TimeDisplayViewModel>();
+                services.AddTransient<Announcer>();
                 services.AddTransient<TimeDisplayPage>();
                 services.AddTransient<ShellPage>();
                 services.AddTransient<ShellViewModel>();

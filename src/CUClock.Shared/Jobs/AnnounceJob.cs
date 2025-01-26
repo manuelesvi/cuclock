@@ -17,7 +17,7 @@ internal class AnnounceJob : JobBase
         var cronExpr = (string)context.MergedJobDataMap[CRON_KEY];
         var logger = Dependencies.ServiceProvider.GetService<ILogger<IJob>>();
         var announcer = Dependencies.ServiceProvider.GetService<IAnnouncer>();
-        
+
         logger.LogInformation("CRON expression: {cronExpr}", cronExpr);
         logger.LogInformation("Scheduled FireTime was: {scheduledFireTime}",
             context.ScheduledFireTimeUtc?.ToLocalTime().TimeOfDay);

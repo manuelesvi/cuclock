@@ -4,8 +4,8 @@ namespace CUClock.Maui.Views;
 
 public partial class ChaptersPage : ContentPage
 {
-	public ChaptersPage()
-	{
+    public ChaptersPage()
+    {
         BindingContext = App.Current!.Handler.GetServiceProvider()
             .GetService<Chapters>(); // Chapters' ViewModel
         InitializeComponent();

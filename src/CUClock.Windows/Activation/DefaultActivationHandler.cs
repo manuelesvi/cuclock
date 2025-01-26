@@ -1,6 +1,5 @@
-﻿using CUClock.Windows.Contracts.Services;
-using CUClock.Shared.ViewModels;
-
+﻿using CUClock.Shared.ViewModels;
+using CUClock.Windows.Contracts.Services;
 using Microsoft.UI.Xaml;
 
 namespace CUClock.Windows.Activation;

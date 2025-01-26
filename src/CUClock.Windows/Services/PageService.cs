@@ -1,10 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-
-using CUClock.Windows.Contracts.Services;
 using CUClock.Shared.ViewModels;
+using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.ViewModels;
 using CUClock.Windows.Views;
-
 using Microsoft.UI.Xaml.Controls;
 
 namespace CUClock.Windows.Services;

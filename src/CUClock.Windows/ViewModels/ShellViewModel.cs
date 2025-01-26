@@ -1,9 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-
-using CUClock.Windows.Contracts.Services;
 using CUClock.Shared.ViewModels;
+using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Views;
-
 using Microsoft.UI.Xaml.Navigation;
 
 namespace CUClock.Windows.ViewModels;

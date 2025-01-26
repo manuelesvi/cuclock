@@ -1,22 +1,21 @@
 ﻿using System.Globalization;
 using Aphorismus.Shared.Services;
-using CUClock.Windows.Activation;
-using CUClock.Windows.Contracts.Services;
 using CUClock.Shared;
 using CUClock.Shared.Contracts.Services;
+using CUClock.Shared.Helpers;
 using CUClock.Shared.Services;
+using CUClock.Shared.ViewModels;
+using CUClock.Windows.Activation;
+using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Models;
 using CUClock.Windows.Notifications;
 using CUClock.Windows.Services;
 using CUClock.Windows.ViewModels;
-using CUClock.Shared.ViewModels;
 using CUClock.Windows.Views;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-using CUClock.Shared.Helpers;
 using Plugin.Maui.Audio;
 
 namespace CUClock.Windows;

@@ -48,30 +48,33 @@ public partial class Chapters : BaseViewModel
             content[d.NumeroCapitulo] = d.IsSelected;
         }
 
-        _fileService.Save(FileSystem.Current.AppDataDirectory,
-            FileName, content);
+        _fileService.Save(FileName, content);
     }
 
     private void Load()
     {
+        // read chapters.json file into content
         Dictionary<int, bool> content;
         try
         {
-            content = _fileService.Read<Dictionary<int, bool>>(
-                FileSystem.Current.AppDataDirectory, FileName) ?? [];
+            content = _fileService
+                .Read<Dictionary<int, bool>>(FileName) ?? [];
         }
         catch
         {
             content = [];
         }
 
-        var todosSelected = content.All(x => x.Value);
-        var chapters = new List<ChapterDetail>();
+        var allIncluded = content.All(x => x.Value);
         var todos = new ChapterDetail(this,
-            new Capitulo { Nombre = "Todos" }, _logger, todosSelected);
+            new Capitulo { Nombre = "Todos" },
+            _logger, allIncluded);
         todos.TodosSelected += Todos_TodosSelected;
-        chapters.Add(todos);
 
+        var chapters = new List<ChapterDetail>
+        {
+            todos
+        };
         for (var i = 0; i < _phraseProvider.NumberOfChapters; i++)
         {
             var chapter = i + 1;
@@ -82,7 +85,7 @@ public partial class Chapters : BaseViewModel
             }, _logger, GetSelectionState(chapter)));
         }
         chapters.Add(todos);
-        Items = chapters;
+        Items = chapters; // done
 
         bool GetSelectionState(int chapter)
             => !content.ContainsKey(chapter) || content[chapter];

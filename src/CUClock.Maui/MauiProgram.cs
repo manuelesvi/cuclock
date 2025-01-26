@@ -4,9 +4,9 @@ using CUClock.Shared.Contracts.Services;
 using CUClock.Shared.Helpers;
 using CUClock.Shared.Services;
 using CUClock.Shared.ViewModels;
-using AnnouncerVM = CUClock.Shared.ViewModels.Announcer;
 using Microsoft.Extensions.Logging;
 using Plugin.Maui.Audio;
+using AnnouncerVM = CUClock.Shared.ViewModels.Announcer;
 
 namespace CUClock.Maui;
 
@@ -27,7 +27,7 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
         builder.AddAudio(); // NuGet: Plugin.Maui.Audio
-        
+
         var services = builder.Services;
         // PhraseProvider
         services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
@@ -39,7 +39,7 @@ public static class MauiProgram
                 ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
             };
         });
-        
+
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddSingleton<IAnnouncer, Shared.Services.Announcer>();
         services.AddTransient<IFileService, FileService>();
@@ -56,7 +56,7 @@ public static class MauiProgram
         var app = builder.Build();
 
         Dependencies.ServiceProvider = app.Services;
-        
+
         return app;
     }
 }

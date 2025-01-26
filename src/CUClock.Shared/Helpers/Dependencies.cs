@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 namespace CUClock.Shared.Helpers;
 public class Dependencies
 {
-    public static IServiceProvider ServiceProvider { get; set; }
+    public static IServiceProvider ServiceProvider
+    {
+        get; set;
+    }
 
 }

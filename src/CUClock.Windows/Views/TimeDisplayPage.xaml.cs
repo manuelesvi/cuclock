@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Text;
 using Aphorismus.Shared.Messages;
 using CommunityToolkit.Mvvm.Messaging;
+using CUClock.Shared.ViewModels;
 using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Helpers;
-using CUClock.Shared.ViewModels;
 using Microsoft.UI.Xaml.Controls;
 
 namespace CUClock.Windows.Views;

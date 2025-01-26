@@ -1,11 +1,9 @@
-﻿using CUClock.Windows.Contracts.Services;
-using CUClock.Shared.Contracts.Services;
+﻿using CUClock.Shared.Contracts.Services;
 using CUClock.Shared.Helpers;
+using CUClock.Windows.Contracts.Services;
 using CUClock.Windows.Helpers;
 using CUClock.Windows.Models;
-
 using Microsoft.Extensions.Options;
-
 using Windows.ApplicationModel;
 using Windows.Storage;
 

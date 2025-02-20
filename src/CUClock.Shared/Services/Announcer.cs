@@ -44,6 +44,16 @@ namespace CUClock.Shared.Services;
 ///  </example>
 public class Announcer : BackgroundService, IAnnouncer
 {
+    /// <summary>
+    /// Defines a speaking task
+    /// programmed to execute in the future.
+    /// They are defined for each quarter of an hour
+    /// and repeated every hour.
+    /// </summary>
+    public delegate Task Schedule();
+
+    internal const string ChapterSettings = "chapters.json";
+
     private const int Default_Duration = 41 * 100; // 4.1 seconds
     private const int Bells_Duration = 150 * 100; // 15 seconds
     private const int Bells_AfterDelay = 370 * 100; // delay after 1st melody
@@ -77,27 +87,6 @@ public class Announcer : BackgroundService, IAnnouncer
     /// </summary>
     private const int FiveTasks = 5;
 
-    /// <summary>
-    /// Defines a speaking task
-    /// programmed to execute in the future.
-    /// They are defined for each quarter of an hour
-    /// and repeated every hour.
-    /// </summary>
-    public delegate Task Schedule();
-
-    /// <summary>
-    /// Mexican spanish <see cref="CultureInfo"/>.
-    /// </summary>
-    private readonly CultureInfo _mxCulture
-        = CultureInfo.GetCultureInfo("es-MX");
-
-    private readonly IPhraseProvider _phraseProvider;
-    private readonly IScheduler _scheduler;
-    private readonly ILogger<Announcer> _logger;
-    private readonly IAudioManager _audioManager;
-    private readonly IFileService _fileService;
-    private readonly Random _random = new();
-
     private const string BellsWAV = "bells.wav";
     private const string CuCuWAV = "CUCKOOO.WAV";
     private const string CucarachaWAV = "horn.wav";
@@ -106,13 +95,21 @@ public class Announcer : BackgroundService, IAnnouncer
     private const string Gallo2WAV = "rooster2.wav";
     private const string PajaroLocoWAV = "pajaro_loco.wav";
 
-    private readonly SpeechOptions _ttsOptions = new();
+    private readonly CultureInfo _mxCulture
+        = CultureInfo.GetCultureInfo("es-MX");
+    private readonly IPhraseProvider _phraseProvider;
+    private readonly IScheduler _scheduler;
+    private readonly ILogger<Announcer> _logger;
+    private readonly IAudioManager _audioManager;
+    private readonly IFileService _fileService;
+    private readonly Random _random = new();
     private readonly Task _loadLocales;
-    private Locale[]? _esLocales;
-    private CancellationTokenSource? _silence = new();
-
+    private readonly SpeechOptions _ttsOptions = new();
     private readonly Stack<Frase> _previous = new();
     private readonly Stack<Frase> _next = new();
+
+    private Locale[]? _esLocales;
+    private CancellationTokenSource? _silence = new();
 
     /// <summary>
     /// Initializes an <see cref="Announcer"/>.
@@ -563,19 +560,17 @@ public class Announcer : BackgroundService, IAnnouncer
         Frase phrase;
         try
         {
-            var contents = _fileService.Read<Dictionary<int, bool>>(
-                    FileSystem.Current.AppDataDirectory, "chapters.json");
-            var selected = contents
-                .Where(c => c.Value)
-                .Select(c => c.Key)
-                .ToArray();
-            phrase = _phraseProvider.GetRandomPhrase(_random, chapters: selected);
+            var contents = _fileService.Read<Dictionary<int, bool>>(ChapterSettings);
+            var selected = from c in contents
+                           where c.Value
+                           select c.Key;
+            phrase = _phraseProvider.GetRandomPhrase(_random,
+                chapters: selected);
         }
         catch
         {
             phrase = _phraseProvider.GetRandomPhrase(_random);
         }
-
         _previous.Push(phrase);
         SendMessage(phrase); // new one
     }

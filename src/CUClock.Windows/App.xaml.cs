@@ -81,7 +81,7 @@ public partial class App : Application
 
                 // Core Services
                 services.AddSingleton<IFileService, FileService>();
-                services.AddSingleton<IAnnouncer, Announcer>();
+                services.AddSingleton<IAnnouncer, Shared.Services.Announcer>();
                 services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
                 {
                     var logger = services.GetService<ILogger<PhraseProvider>>()!;
@@ -117,7 +117,7 @@ public partial class App : Application
                 // Views and ViewModels
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<SettingsPage>();
-                services.AddTransient<Announcer>();
+                services.AddTransient<Shared.Services.Announcer>();
                 services.AddTransient<TimeDisplayPage>();
                 services.AddTransient<ShellPage>();
                 services.AddTransient<ShellViewModel>();
@@ -127,7 +127,7 @@ public partial class App : Application
                     nameof(LocalSettingsOptions)));
 
                 services.AddHostedService(services =>
-                    (Announcer)services.GetService<IAnnouncer>()!);
+                    (Shared.Services.Announcer)services.GetService<IAnnouncer>()!);
             }).Build();
         Dependencies.ServiceProvider = App.ServiceProvider;
         App.GetService<IAppNotificationService>().Initialize();

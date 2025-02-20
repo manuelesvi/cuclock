@@ -1,23 +1,22 @@
-﻿using Aphorismus.Shared.Entities;
+﻿using System.Collections.ObjectModel;
+using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CUClock.Shared.Contracts.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Storage;
+using AnnouncerSvc = CUClock.Shared.Services.Announcer;
 
 namespace CUClock.Shared.ViewModels;
 
 public partial class Chapters : BaseViewModel
 {
-    private const string FileName = "chapters.json";
-
     private readonly IFileService _fileService;
     private readonly ILogger<Chapters> _logger;
     private readonly IPhraseProvider _phraseProvider;
     private bool _isBatchSelect;
 
     [ObservableProperty]
-    private IList<ChapterDetail> _items;
+    private IReadOnlyList<ChapterDetail> _items;
 
     public Chapters(IPhraseProvider phraseProvider,
         IFileService fileService,
@@ -48,17 +47,16 @@ public partial class Chapters : BaseViewModel
             content[d.NumeroCapitulo] = d.IsSelected;
         }
 
-        _fileService.Save(FileName, content);
+        _fileService.Save(AnnouncerSvc.ChapterSettings, content);
     }
 
     private void Load()
     {
-        // read chapters.json file into content
         Dictionary<int, bool> content;
         try
         {
             content = _fileService
-                .Read<Dictionary<int, bool>>(FileName) ?? [];
+                .Read<Dictionary<int, bool>>(AnnouncerSvc.ChapterSettings) ?? [];
         }
         catch
         {
@@ -85,7 +83,7 @@ public partial class Chapters : BaseViewModel
             }, _logger, GetSelectionState(chapter)));
         }
         chapters.Add(todos);
-        Items = chapters; // done
+        Items = new ReadOnlyCollection<ChapterDetail>(chapters); // done
 
         bool GetSelectionState(int chapter)
             => !content.ContainsKey(chapter) || content[chapter];

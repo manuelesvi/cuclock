@@ -19,14 +19,11 @@ namespace CUClock.Shared.Services;
 #nullable enable
 
 /// <summary>
-/// Announces current local time at specific intervals
-/// when executed as a <see cref="BackgroundService"/>
-/// or at will calling
-/// <see cref="IAnnouncer.Announce(bool)"/> method.
+/// Announces current local time at specific intervals (0, 15, 30 & 45 min.).
 /// </summary>
 /// <remarks>
+/// Executes as a <see cref="BackgroundService"/>.
 /// Intervals are defined using CRON expressions:
-///
 ///                                         Allowed values    Allowed special characters Comment
 ///  ┌───────────── second(optional)        0-59              * , - /
 ///  │ ┌───────────── minute                0-59              * , - /
@@ -36,8 +33,8 @@ namespace CUClock.Shared.Services;
 ///  │ │ │ │ │ ┌───────────── day of week   0-6  or SUN-SAT   * , - / # L ?              Both 0 and 7 means SUN
 ///  │ │ │ │ │ │
 ///  * * * * * *
+/// See: <see cref="Announce(bool)"/> method.
 ///  </remarks>
-///
 ///  <example>
 ///  0 15 6-18 * * MON-SAT (daily every hour at 15 minutes monday until saturday)
 ///  0 15 6-18 * * 1-6 (same as above but using numbers for day of week)

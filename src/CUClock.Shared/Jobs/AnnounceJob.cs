@@ -12,7 +12,8 @@ internal class AnnounceJob : BaseJob
 
     public async override Task Execute(IJobExecutionContext context)
     {
-        ArgumentNullException.ThrowIfNull(Dependencies.ServiceProvider, nameof(Dependencies.ServiceProvider));
+        ArgumentNullException.ThrowIfNull(Dependencies.ServiceProvider,
+            nameof(Dependencies.ServiceProvider));
 
         var cronExpr = (string)context.MergedJobDataMap[CRON_KEY];
         var logger = Dependencies.ServiceProvider.GetService<ILogger<IJob>>();

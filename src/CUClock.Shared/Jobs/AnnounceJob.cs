@@ -6,7 +6,7 @@ using Quartz;
 
 namespace CUClock.Shared.Jobs;
 
-internal class AnnounceJob : JobBase
+internal class AnnounceJob : BaseJob
 {
     public const string CRON_KEY = "cronExpr";
 

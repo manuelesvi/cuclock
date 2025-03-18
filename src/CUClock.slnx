@@ -1,0 +1,29 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="aphorismus/src/Aphorismus.Shared/Aphorismus.Shared.csproj" />
+  <Project Path="CUClock.Maui/CUClock.Maui.csproj" />
+  <Project Path="CUClock.Shared/CUClock.Shared.csproj">
+    <Platform Solution="*|ARM64" Project="arm64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="CUClock.Windows/CUClock.Windows.csproj">
+    <Platform Solution="*|Any CPU" Project="x64" />
+    <Platform Solution="*|ARM64" Project="arm64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Build Solution="Debug|Any CPU" Project="false" />
+    <Deploy Solution="*|ARM64" />
+    <Deploy Solution="*|x64" />
+    <Deploy Solution="*|x86" />
+    <Deploy Solution="Release|Any CPU" />
+  </Project>
+  <Project Path="CUClock/CUClock.csproj">
+    <Build Solution="Debug|Any CPU" Project="false" />
+  </Project>
+</Solution>

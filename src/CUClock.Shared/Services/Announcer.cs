@@ -471,8 +471,15 @@ public class Announcer : BackgroundService, IAnnouncer
             hora != 1 ? hora : "una",
             hora > 1 ? "s" : "");
         await Announce(txt, BellsWAV, Bells_Duration);
-        await Task.Delay(Bells_AfterDelay, SilenceToken);
-        SpeakPhrase();
+        try
+        {
+            await Task.Delay(Bells_AfterDelay, SilenceToken);
+            SpeakPhrase();
+        }
+        catch
+        {
+            throw;
+        }
     }
 
     private async Task Announce(string text,

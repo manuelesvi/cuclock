@@ -16,3 +16,5 @@ along a short phrase taken from Tolstoi's Aphorisms book.
 2. `dotnet run`
 
 😶🍔
+
+Content is hosted on [GitLab](https://gitlab.com/manchax/aphorismus/-/tree/main/src/Aphorismus/Resources/Raw/content?ref_type=heads)

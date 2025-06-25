@@ -9,6 +9,8 @@
 
         <Editor x:Name="PhraseBox"
                 Grid.Row="0"  Grid.ColumnSpan="2"
+                AutoSize="TextChanges"
+                VerticalTextAlignment="Start"
                 VerticalOptions="Fill" />
 
         <StackLayout Orientation="Horizontal"

@@ -11,6 +11,7 @@ public partial class App : Application
     {
         InitializeComponent();
     }
+
     internal static void StartScheduler()
     {
         var scheduler = Dependencies.ServiceProvider.GetService<IScheduler>();

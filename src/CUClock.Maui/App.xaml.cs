@@ -11,6 +11,7 @@ public partial class App : Application
     {
         InitializeComponent();
     }
+
     internal static void StartScheduler()
     {
         var scheduler = Dependencies.ServiceProvider.GetService<IScheduler>();
@@ -34,22 +35,9 @@ public partial class App : Application
         Window window = new(new AppShell())
         {
             Title = "CUClock, cu cu.",
+            Height = 500,
+            Width = 700
         };
-
-        //window.Stopped += Window_Stopped;
-        //window.Resumed += Window_Resumed;
-
         return window;
-    }
-
-    private void Window_Resumed(object? sender, EventArgs e)
-    {
-        StartScheduler();
-    }
-
-    private void Window_Stopped(object? sender, EventArgs e)
-    {
-        Debugger.Break();
-        //StopScheduler();
     }
 }

@@ -1,5 +1,4 @@
 # CUClock
-___
 
 ## About
 A multiple UI application (Console + WinUI + MAUI) that runs at 

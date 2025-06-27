@@ -18,7 +18,7 @@ stages:          # List of stages for jobs, and their order of execution
 
 variables:
   NUGET_PACKAGES_DIRECTORY: '../.nuget'
-  # GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_STRATEGY: recursive
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build

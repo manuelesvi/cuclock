@@ -37,7 +37,7 @@ public partial class Announcer : BaseViewModel
     private string _siguienteText;
 
     public Announcer(IAnnouncer announcer,
-        ILogger<Announcer> logger)
+        ILogger<Announcer> logger) : base(logger)
     {
         _announcer = announcer;
         _logger = logger;

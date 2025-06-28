@@ -20,7 +20,7 @@ public partial class Chapters : BaseViewModel
 
     public Chapters(IPhraseProvider phraseProvider,
         IFileService fileService,
-        ILogger<Chapters> logger)
+        ILogger<Chapters> logger) : base(logger)
     {
         _fileService = fileService;
         _logger = logger;

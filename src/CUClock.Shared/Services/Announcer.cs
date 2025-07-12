@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
 using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
@@ -10,9 +8,9 @@ using Humanizer;
 using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Media;
-using Microsoft.Maui.Storage;
 using Plugin.Maui.Audio;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace CUClock.Shared.Services;
 
@@ -140,25 +138,18 @@ public class Announcer : BackgroundService, IAnnouncer
         _loadLocales = Task.Run(async () =>
         {
             var locales = await TextToSpeech.Default.GetLocalesAsync();
-            _esLocales = locales
+            _esLocales = [.. locales
                 .Where(l => l.Language.StartsWith(
-                    _mxCulture.TwoLetterISOLanguageName))
-                .ToArray();
+                    _mxCulture.TwoLetterISOLanguageName))];
         });
 
-        var startScheduler = Task.Run(async () =>
+        _ = Task.Run(() => _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
         {
-            await _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
-            {
-                await _scheduler.Start();
-                _logger.LogInformation(
-                    "Job Scheduler started on {time}...",
-                    DateTime.Now.ToLongTimeString());
-            });
-        });
-
-        _ = Task.Run(async () =>
-            await Task.WhenAll(_loadLocales, startScheduler));
+            await _scheduler.Start();
+            _logger.LogInformation(
+                "Job Scheduler started on {time}...",
+                DateTime.Now.ToLongTimeString());
+        }).ConfigureAwait(false));
     } // Announcer .ctor()
 
     public bool EnableAphorisms

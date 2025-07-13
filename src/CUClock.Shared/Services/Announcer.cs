@@ -143,9 +143,12 @@ public class Announcer : BackgroundService, IAnnouncer
                     _mxCulture.TwoLetterISOLanguageName))];
         });
 
-        _ = Task.Run(() => _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
+        _ = Task.Run(() => _scheduler
+        .RegisterJobs(Schedules)
+        .ContinueWith(async (t) =>
         {
             await _scheduler.Start();
+
             _logger.LogInformation(
                 "Job Scheduler started on {time}...",
                 DateTime.Now.ToLongTimeString());

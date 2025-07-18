@@ -322,13 +322,14 @@ public class Announcer : BackgroundService, IAnnouncer
         }
     }
 
-    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
-        ? hora > 1
-            ? "Son las"
-            : "Es la"
-        : hora > 1
-            ? "Son"
-            : "Es";
+    private static string PrefijoHora(int hora, bool conArticulo = true)
+        => conArticulo
+            ? hora > 1
+                ? "Son las"
+                : "Es la"
+            : hora > 1
+                ? "Son"
+                : "Es";
 
     private static string SufijoHora(int hora)
         => hora > 1 ? "s" : "";

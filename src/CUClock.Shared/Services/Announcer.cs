@@ -222,10 +222,9 @@ public class Announcer : BackgroundService, IAnnouncer
                 var (file, duration) = gallos[_random.Next(0, 2)];
                 PlaySound(file);
                 await Task.Delay(duration * 100);
+                PlaySound(PistolWAV);
+                await Task.Delay(2000);
             }
-
-            PlaySound(PistolWAV);
-            await Task.Delay(2000);
             SpeakPhrase();
         });
     }
@@ -395,7 +394,7 @@ public class Announcer : BackgroundService, IAnnouncer
                 precision: Precision_Second),
             now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
 
-        await Announce(txt, CucarachaWAV);
+        await Announce(txt);
         SpeakPhrase();
     }
 

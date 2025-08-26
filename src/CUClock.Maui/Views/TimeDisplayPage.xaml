@@ -13,33 +13,6 @@
                 VerticalTextAlignment="Start"
                 VerticalOptions="Fill" />
 
-        <StackLayout Orientation="Horizontal"
-                     Grid.Row="1" Grid.Column="0">
-            <Switch x:Name="msToggle"
-                    Toggled="MsToggle_Toggled"
-                    IsToggled="{Binding MillisecondSwitch}" />
-            <Label x:Name="msLabel" Text="Con milisegundos" 
-                   VerticalTextAlignment="Center" />
-        </StackLayout>
-
-        <StackLayout Orientation="Horizontal"
-                     Grid.Row="1" Grid.Column="1">
-            <Switch x:Name="aforismoToggle"
-                    Toggled="AforismoToggle_Toggled"
-                    IsToggled="{Binding AphorismSwitch}" />
-            <Label x:Name="aforismoLabel" Text="Con aforismo"
-                   VerticalTextAlignment="Center" />
-        </StackLayout>
-
-        <StackLayout Orientation="Horizontal"
-                     Grid.Row="2" Grid.Column="0">
-            <Switch x:Name="galloToggle"
-                    Toggled="GalloToggle_Toggled"
-                    IsToggled="{Binding GalloSwitch}" />
-            <Label x:Name="galloLabel" Text="Con gallo"
-                   VerticalTextAlignment="Center" />
-        </StackLayout>
-
         <FlexLayout JustifyContent="End" Wrap="Wrap" Padding="5"
             Grid.Row="3" Grid.ColumnSpan="2">
             <Button Text="Silencio" 

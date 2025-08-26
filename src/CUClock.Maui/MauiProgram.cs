@@ -22,6 +22,7 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("Segoe-Fluent-Icons.ttf", "SegoeFluentIcons");
             });
 #if DEBUG
         builder.Logging.AddDebug();
@@ -43,7 +44,7 @@ public static class MauiProgram
         services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
         services.AddSingleton<IAnnouncer, Shared.Services.Announcer>();
         services.AddTransient<IFileService, FileService>();
-        services.AddTransient<AnnouncerVM>();
+        services.AddSingleton<AnnouncerVM>();
         services.AddTransient<Chapters>();
 
 

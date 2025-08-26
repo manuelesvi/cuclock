@@ -80,31 +80,4 @@ public partial class TimeDisplayPage : ContentPage
         //#endif
         //        }
     }
-
-    private void MsToggle_Toggled(object sender, ToggledEventArgs e)
-    {
-        msLabel.Text = e.Value switch
-        {
-            true => "Con milisegundos",
-            false => "Sin milisegundos"
-        };
-    }
-
-    private void AforismoToggle_Toggled(object sender, ToggledEventArgs e)
-    {
-        aforismoLabel.Text = e.Value switch
-        {
-            true => "Con aforismo",
-            false => "Sin aforismo"
-        };
-    }
-
-    private void GalloToggle_Toggled(object sender, ToggledEventArgs e)
-    {
-        galloLabel.Text = e.Value switch
-        {
-            true => "Con gallo",
-            false => "Sin gallo"
-        };
-    }
 }

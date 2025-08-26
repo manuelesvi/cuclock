@@ -4,21 +4,18 @@
              xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
              x:Class="CUClock.Maui.Views.TimeDisplayPage"
              x:DataType="vm:Announcer">
-    <Grid RowDefinitions="*,Auto,Auto,Auto"
-          ColumnDefinitions="50*,50*" Margin="10">
-
+    <Grid RowDefinitions="*,Auto" RowSpacing="5" Padding="5">
         <Editor x:Name="PhraseBox"
-                Grid.Row="0"  Grid.ColumnSpan="2"
                 AutoSize="TextChanges"
                 VerticalTextAlignment="Start"
                 VerticalOptions="Fill" />
-
-        <FlexLayout JustifyContent="End" Wrap="Wrap" Padding="5"
-            Grid.Row="3" Grid.ColumnSpan="2">
-            <Button Text="Silencio" 
+        <FlexLayout JustifyContent="End" Wrap="Wrap"
+                    Grid.Row="1" Padding="0,0,0,10">
+            
+            <Button Text="Silencio"
                     Command="{Binding Silence}"
                     Margin="3,5" />
-            <Button Text="Anunciar" 
+            <Button Text="Anunciar"
                     Command="{Binding Announce}"
                     Margin="3,5" />
 
@@ -35,7 +32,7 @@
 
             <Button Text="{Binding SiguienteText}"
                     Command="{Binding Next}"
-                    Margin="3,5" />
+                    Margin="3,5,0,5" />
         </FlexLayout>
     </Grid>
 </ContentPage>

@@ -22,6 +22,7 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                // https://github.com/MicrosoftDocs/windows-dev-docs/blob/docs/hub/apps/design/style/segoe-fluent-icons-font.md#icon-list
                 fonts.AddFont("Segoe-Fluent-Icons.ttf", "SegoeFluentIcons");
             });
 #if DEBUG

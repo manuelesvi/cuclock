@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
              x:Class="CUClock.Maui.Views.SettingsPage"
              x:DataType="vm:Announcer"
-             Title="SettingsPage">
+             Title="Configuración">
     <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
           ColumnDefinitions="50,*"
           ColumnSpacing="10" RowSpacing="5" Padding="30,20,10,10">
@@ -34,7 +34,7 @@
 
         <HorizontalStackLayout Spacing="10" HorizontalOptions="End"
                                Grid.Row="4" Grid.ColumnSpan="2">
-            <Button Text="Cancelar" Clicked="Cancel_Clicked"    
+            <Button Text="Cancelar" Clicked="Cancel_Clicked"
                     x:Name="CancelarButton">
                 <Button.ImageSource>
                     <FontImageSource Glyph="&#xe711;" />

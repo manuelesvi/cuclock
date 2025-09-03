@@ -29,36 +29,34 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
         builder.AddAudio(); // NuGet: Plugin.Maui.Audio
+        builder.Services
+            .AddServices()
+            .AddViewModels();
+        var app = builder.Build();
+        Dependencies.ServiceProvider = app.Services;
+        return app;
+    }
 
-        var services = builder.Services;
-        // PhraseProvider
-        services.AddTransient<IPhraseProvider, PhraseProvider>(services =>
+    private static IServiceCollection AddViewModels(this IServiceCollection services)
+    {
+        services.AddSingleton<AnnouncerVM>();
+        services.AddTransient<Chapters>();
+        return services;
+    }
+
+    // PhraseProvider factory with file access methods (exists and read)
+    private static IServiceCollection AddServices(this IServiceCollection services) => services
+        .AddTransient<IPhraseProvider, PhraseProvider>(services =>
         {
             var logger = services.GetService<ILogger<PhraseProvider>>()!;
+            // lambdas call local file system methods to read txt files
             return new PhraseProvider(logger)
             {
                 FileExists = filePath => FileSystem.AppPackageFileExistsAsync(filePath),
                 ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
             };
-        });
-
-        services.AddSingleton<IScheduler, Shared.Services.Scheduler>();
-        services.AddSingleton<IAnnouncer, Shared.Services.Announcer>();
-        services.AddTransient<IFileService, FileService>();
-        services.AddSingleton<AnnouncerVM>();
-        services.AddTransient<Chapters>();
-
-
-        // background processing is done by IScheduler,
-        // ExecuteAsync has become obsolete
-
-        //services.AddHostedService(services =>
-        //    (Announcer)services.GetService<IAnnouncer>()!);
-
-        var app = builder.Build();
-
-        Dependencies.ServiceProvider = app.Services;
-
-        return app;
-    }
+        })
+        .AddSingleton<IScheduler, Shared.Services.Scheduler>()
+        .AddSingleton<IAnnouncer, Shared.Services.Announcer>()
+        .AddTransient<IFileService, FileService>();
 }

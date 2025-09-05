@@ -19,4 +19,6 @@
             Route="Chapters" />
     </FlyoutItem>
 
+    <MenuItem Text="Configuración"
+              Clicked="Settings_Clicked" />
 </Shell>

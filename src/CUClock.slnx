@@ -5,6 +5,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="../.gitlab-ci.yml" />
+  </Folder>
   <Project Path="aphorismus/src/Aphorismus.Shared/Aphorismus.Shared.csproj" />
   <Project Path="CUClock.Maui/CUClock.Maui.csproj" />
   <Project Path="CUClock.Shared/CUClock.Shared.csproj">

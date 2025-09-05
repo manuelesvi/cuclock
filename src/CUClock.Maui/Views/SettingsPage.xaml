@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
+             x:Class="CUClock.Maui.Views.SettingsPage"
+             x:DataType="vm:Announcer"
+             Title="Configuración">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
+          ColumnDefinitions="50,*"
+          ColumnSpacing="10" RowSpacing="5" Padding="30,20,10,10">
+        
+        <Switch x:Name="msToggle"
+                Toggled="MsToggle_Toggled"
+                IsToggled="{Binding MillisecondSwitch}" />
+        <Label x:Name="msLabel" Text="Con milisegundos"
+               VerticalTextAlignment="Center" 
+               Grid.Column="1" />
+
+        <Switch x:Name="aforismoToggle"
+                Toggled="AforismoToggle_Toggled"
+                IsToggled="{Binding AphorismSwitch}"
+                Grid.Row="1" />
+        <Label x:Name="aforismoLabel" Text="Con aforismo"
+               VerticalTextAlignment="Center"
+               Grid.Row="1" Grid.Column="1" />
+
+        <Switch x:Name="galloToggle" 
+                Toggled="GalloToggle_Toggled"
+                IsToggled="{Binding GalloSwitch}"
+                Grid.Row="2" Grid.Column="0" />
+        <Label x:Name="galloLabel" Text="Con gallo"
+               VerticalTextAlignment="Center"
+               Grid.Row="2" Grid.Column="1" />
+
+        <HorizontalStackLayout Spacing="10" HorizontalOptions="End"
+                               Grid.Row="4" Grid.ColumnSpan="2">
+            <Button Text="Cancelar" Clicked="Cancel_Clicked"
+                    x:Name="CancelarButton">
+                <Button.ImageSource>
+                    <FontImageSource Glyph="&#xe711;" />
+                </Button.ImageSource>
+            </Button>
+            <Button Text="Guardar" Clicked="Save_Clicked">
+                <Button.ImageSource>
+                    <FontImageSource Glyph="&#xe74e;" />
+                </Button.ImageSource>
+            </Button>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

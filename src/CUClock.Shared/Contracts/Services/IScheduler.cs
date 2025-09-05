@@ -10,6 +10,10 @@ public interface IScheduler
 {
     Task RegisterJobs(CronDictionary jobs);
 
+    /// <summary>
+    /// Starts the threads that will run the jobs.
+    /// </summary>
+    /// <returns></returns>
     Task Start();
 
     Task Stop();

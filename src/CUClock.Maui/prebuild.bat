@@ -1,1 +1,1 @@
-XCOPY /Y /S /Q ..\aphorismus\src\Aphorismus\Resources\Raw\content .\Resources\Raw\content
+XCOPY /Y /S /Q ..\aphorismus\src\Aphorismus\Resources\Raw\content .\Resources\Raw\content\

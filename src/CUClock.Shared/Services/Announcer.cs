@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
 using Aphorismus.Shared.Entities;
 using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
@@ -10,9 +8,9 @@ using Humanizer;
 using Humanizer.Localisation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Media;
-using Microsoft.Maui.Storage;
 using Plugin.Maui.Audio;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace CUClock.Shared.Services;
 
@@ -140,25 +138,21 @@ public class Announcer : BackgroundService, IAnnouncer
         _loadLocales = Task.Run(async () =>
         {
             var locales = await TextToSpeech.Default.GetLocalesAsync();
-            _esLocales = locales
+            _esLocales = [.. locales
                 .Where(l => l.Language.StartsWith(
-                    _mxCulture.TwoLetterISOLanguageName))
-                .ToArray();
+                    _mxCulture.TwoLetterISOLanguageName))];
         });
 
-        var startScheduler = Task.Run(async () =>
+        _ = Task.Run(() => _scheduler
+        .RegisterJobs(Schedules)
+        .ContinueWith(async (t) =>
         {
-            await _scheduler.RegisterJobs(Schedules).ContinueWith(async (t) =>
-            {
-                await _scheduler.Start();
-                _logger.LogInformation(
-                    "Job Scheduler started on {time}...",
-                    DateTime.Now.ToLongTimeString());
-            });
-        });
+            await _scheduler.Start();
 
-        _ = Task.Run(async () =>
-            await Task.WhenAll(_loadLocales, startScheduler));
+            _logger.LogInformation(
+                "Job Scheduler started on {time}...",
+                DateTime.Now.ToLongTimeString());
+        }).ConfigureAwait(false));
     } // Announcer .ctor()
 
     public bool EnableAphorisms
@@ -228,10 +222,9 @@ public class Announcer : BackgroundService, IAnnouncer
                 var (file, duration) = gallos[_random.Next(0, 2)];
                 PlaySound(file);
                 await Task.Delay(duration * 100);
+                PlaySound(PistolWAV);
+                await Task.Delay(2000);
             }
-
-            PlaySound(PistolWAV);
-            await Task.Delay(2000);
             SpeakPhrase();
         });
     }
@@ -328,13 +321,14 @@ public class Announcer : BackgroundService, IAnnouncer
         }
     }
 
-    private static string PrefijoHora(int hora, bool conArticulo = true) => conArticulo
-        ? hora > 1
-            ? "Son las"
-            : "Es la"
-        : hora > 1
-            ? "Son"
-            : "Es";
+    private static string PrefijoHora(int hora, bool conArticulo = true)
+        => conArticulo
+            ? hora > 1
+                ? "Son las"
+                : "Es la"
+            : hora > 1
+                ? "Son"
+                : "Es";
 
     private static string SufijoHora(int hora)
         => hora > 1 ? "s" : "";
@@ -400,7 +394,7 @@ public class Announcer : BackgroundService, IAnnouncer
                 precision: Precision_Second),
             now.Hour >= 13 && now.Hour < 20 ? "tarde" : "noche");
 
-        await Announce(txt, CucarachaWAV);
+        await Announce(txt);
         SpeakPhrase();
     }
 

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
+<ContentPage xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
              x:Class="CUClock.Maui.Views.SettingsPage"
              x:DataType="vm:Announcer"
              Title="Configuración">
@@ -13,7 +11,7 @@
                 Toggled="MsToggle_Toggled"
                 IsToggled="{Binding MillisecondSwitch}" />
         <Label x:Name="msLabel" Text="Con milisegundos"
-               VerticalTextAlignment="Center" 
+               VerticalTextAlignment="Center"
                Grid.Column="1" />
 
         <Switch x:Name="aforismoToggle"

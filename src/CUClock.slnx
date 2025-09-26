@@ -8,6 +8,7 @@
   <Folder Name="/Solution Items/">
     <File Path="../.gitlab-ci.yml" />
   </Folder>
+  <Project Path="aphorismus/src/Aphorismus.Ollama/Aphorismus.Ollama.csproj" Id="ca8c2b2e-3b0c-47c2-a12c-af28f11aad23" />
   <Project Path="aphorismus/src/Aphorismus.Shared/Aphorismus.Shared.csproj" />
   <Project Path="CUClock.Maui/CUClock.Maui.csproj" />
   <Project Path="CUClock.Shared/CUClock.Shared.csproj">

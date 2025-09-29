@@ -45,7 +45,7 @@
 
             <Button Text="{Binding SiguienteText}"
                     Command="{Binding Next}"
-                    Margin="3,5,0,5">
+                    Margin="3,5">
                 <Button.ImageSource>
                     <FontImageSource Glyph="&#xe893;" />
                 </Button.ImageSource>
@@ -54,7 +54,7 @@
             <Button Text="Nuev@"
                     BackgroundColor="Green"
                     Command="{Binding SpeakPhrase}"
-                    Margin="3,5">
+                    Margin="3,5,0,5">
                 <Button.ImageSource>
                     <FontImageSource Glyph="&#xe767;" />
                 </Button.ImageSource>

@@ -1,12 +1,38 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="CUClock.Maui.Views.Search"
-             Title="Buscar">
-    <VerticalStackLayout>
-        <Editor
-            Placeholder="Escriba aquí temas o conceptos a buscar..."
-            VerticalOptions="Center" 
-            HorizontalOptions="Fill" />
-    </VerticalStackLayout>
+             xmlns:vm="clr-namespace:CUClock.Shared.ViewModels;assembly=CUClock.Shared"
+             xmlns:entities="clr-namespace:Aphorismus.Shared.Entities;assembly=Aphorismus.Shared"
+             x:Class="CUClock.Maui.Views.Search" x:DataType="vm:SemanticSearch">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Entry Placeholder="Escriba aquí temas o conceptos a buscar..."
+               VerticalOptions="Center" HorizontalOptions="Fill"
+               Completed="Query_Completed" x:Name="QueryEntry"
+               Grid.Row="0" />
+
+        <ScrollView Grid.Row="1">
+            <CollectionView ItemsSource="{Binding Phrases}"
+                SelectionChanged="CollectionView_SelectionChanged"
+                SelectionMode="Single" VerticalOptions="Fill">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="entities:Frase">
+                        <Border>
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Capitulo.Nombre}"
+                                       FontSize="Subtitle" Padding="10,0,0,0" />
+                                <Label Text="{Binding Texto}" Padding="15,20" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+        
+        <HorizontalStackLayout HorizontalOptions="End"
+                               Spacing="10" Padding="20,10"
+                               Grid.Row="2">
+            <Button Text="Limpiar" Command="{Binding Clean}" />
+            <Button Text="Buscar" Clicked="Buscar_Clicked"/>
+        </HorizontalStackLayout>
+    </Grid>
 </ContentPage>

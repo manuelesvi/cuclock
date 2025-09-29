@@ -10,11 +10,44 @@ using Microsoft.Extensions.Logging;
 using OllamaSharp;
 using Plugin.Maui.Audio;
 using AnnouncerVM = CUClock.Shared.ViewModels.Announcer;
+using SemanticSearch = CUClock.Shared.Services.SemanticSearch;
+using SemanticSearchVM = CUClock.Shared.ViewModels.SemanticSearch;
 
 namespace CUClock.Maui;
 
 public static class MauiProgram
 {
+    public static MauiApp CreateMauiApp()
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                // https://github.com/MicrosoftDocs/windows-dev-docs/blob/docs/hub/apps/design/style/segoe-fluent-icons-font.md#icon-list
+                fonts.AddFont("Segoe-Fluent-Icons.ttf", "SegoeFluentIcons");
+            });
+#if DEBUG
+        builder.Logging.AddDebug();
+#endif
+        builder.AddAudio(); // NuGet: Plugin.Maui.Audio
+        builder.Services
+            .AddServices()
+            .AddViewModels();
+        
+        var backHost = CreateBackgroundHost();
+        var searchSvc = backHost.Services.GetService<IHostedService>() as SemanticSearch
+            ?? throw new NullReferenceException();
+        builder.Services.AddSingleton(searchSvc!);
+        var app = builder.Build();
+        Dependencies.ServiceProvider = app.Services;
+        App.BackgroundHost = backHost;
+        return app;
+    }
+
     public static IHost CreateBackgroundHost()
     {
         var hostBuilder = new HostBuilder();
@@ -42,40 +75,14 @@ public static class MauiProgram
                 }, ServiceLifetime.Transient);
             services.AddHostedService<SemanticSearch>();
         });
-        var host = hostBuilder.Build();
-        return host;
-    }
-
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .UseMauiCommunityToolkit()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                // https://github.com/MicrosoftDocs/windows-dev-docs/blob/docs/hub/apps/design/style/segoe-fluent-icons-font.md#icon-list
-                fonts.AddFont("Segoe-Fluent-Icons.ttf", "SegoeFluentIcons");
-            });
-#if DEBUG
-        builder.Logging.AddDebug();
-#endif
-        builder.AddAudio(); // NuGet: Plugin.Maui.Audio
-        builder.Services
-            .AddServices()
-            .AddViewModels();
-
-        var app = builder.Build();
-        Dependencies.ServiceProvider = app.Services;
-        return app;
+        return hostBuilder.Build();
     }
 
     private static IServiceCollection AddViewModels(this IServiceCollection services)
     {
         services.AddSingleton<AnnouncerVM>();
         services.AddTransient<Chapters>();
+        services.AddSingleton<SemanticSearchVM>();
         return services;
     }
 

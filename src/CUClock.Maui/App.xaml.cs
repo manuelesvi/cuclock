@@ -7,14 +7,14 @@ namespace CUClock.Maui;
 
 public partial class App : Application
 {
-    private IHost? _backHost;
-    private CancellationTokenSource _cancellationTokenSource = new();
+    private CancellationTokenSource _cts = new();
 
     public App()
     {
         InitializeComponent();
-        _backHost = MauiProgram.CreateBackgroundHost();
     }
+
+    public static IHost? BackgroundHost { get; set; }
 
     internal static void StartScheduler()
     {
@@ -42,14 +42,7 @@ public partial class App : Application
             Height = 500,
             Width = 700
         };
-        window.Stopped += async (s, e) =>
-        {
-            _cancellationTokenSource.Cancel();
-            if (_backHost is null) return;
-            await _backHost.StopAsync();
-            _backHost.Dispose();
-        };
-        _backHost?.RunAsync(_cancellationTokenSource.Token);
+        BackgroundHost?.RunAsync(_cts.Token);
         return window;
     }
 }

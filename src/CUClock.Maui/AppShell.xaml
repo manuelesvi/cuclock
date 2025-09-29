@@ -17,6 +17,11 @@
             Title="Capítulos"
             ContentTemplate="{DataTemplate local:ChaptersPage}"
             Route="Chapters" />
+
+        <ShellContent
+            Title="Búsqueda"
+            ContentTemplate="{DataTemplate local:Search}"
+            Route="Search" />
     </FlyoutItem>
 
     <MenuItem Text="Configuración"

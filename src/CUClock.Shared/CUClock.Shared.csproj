@@ -21,6 +21,8 @@
 		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
 		<PackageReference Include="Quartz" Version="3.14.0" />
 		<PackageReference Include="System.Windows.Extensions" Version="9.0.6" />
+		<PackageReference Include="Microsoft.Extensions.AI" Version="9.9.1" />
+		<PackageReference Include="System.Numerics.Tensors" Version="10.0.0-rc.1.25451.107" />
 	</ItemGroup>
 
 	<ItemGroup>

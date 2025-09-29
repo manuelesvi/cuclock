@@ -8,12 +8,12 @@
     Title="CUClock">
 
     <FlyoutItem FlyoutDisplayOptions="AsMultipleItems">
-        <ShellContent 
+        <ShellContent
             Title="Aforismos"
             ContentTemplate="{DataTemplate local:TimeDisplayPage}"
             Route="TimeDisplay" />
 
-        <ShellContent 
+        <ShellContent
             Title="Capítulos"
             ContentTemplate="{DataTemplate local:ChaptersPage}"
             Route="Chapters" />

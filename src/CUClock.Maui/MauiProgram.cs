@@ -4,7 +4,10 @@ using CUClock.Shared.Contracts.Services;
 using CUClock.Shared.Helpers;
 using CUClock.Shared.Services;
 using CUClock.Shared.ViewModels;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OllamaSharp;
 using Plugin.Maui.Audio;
 using AnnouncerVM = CUClock.Shared.ViewModels.Announcer;
 
@@ -12,6 +15,37 @@ namespace CUClock.Maui;
 
 public static class MauiProgram
 {
+    public static IHost CreateBackgroundHost()
+    {
+        var hostBuilder = new HostBuilder();
+        hostBuilder.ConfigureServices(services =>
+        {
+            services
+                .AddLogging(configure => configure.AddDebug())
+                .AddTransient<IPhraseProvider, PhraseProvider>(services =>
+                {
+                    var logger = services.GetService<ILogger<PhraseProvider>>()!;
+                    // lambdas call local file system methods to read txt files
+                    return new PhraseProvider(logger)
+                    {
+                        FileExists = filePath => FileSystem.AppPackageFileExistsAsync(filePath),
+                        ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
+                    };
+                })
+                .AddEmbeddingGenerator(services =>
+                {
+                    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator =
+                            new OllamaApiClient(
+                                new Uri("http://127.0.0.1:11434"),
+                                defaultModel: "all-minilm");
+                    return embeddingGenerator;
+                }, ServiceLifetime.Transient);
+            services.AddHostedService<SemanticSearch>();
+        });
+        var host = hostBuilder.Build();
+        return host;
+    }
+
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -32,6 +66,7 @@ public static class MauiProgram
         builder.Services
             .AddServices()
             .AddViewModels();
+
         var app = builder.Build();
         Dependencies.ServiceProvider = app.Services;
         return app;

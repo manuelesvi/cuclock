@@ -1,9 +1,13 @@
 ﻿using Aphorismus.Shared.Entities;
+using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Numerics.Tensors;
+using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
@@ -12,6 +16,10 @@ public class SemanticSearch : BackgroundService
     private readonly IPhraseProvider _phraseProvider;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
+    private readonly Channel<string> _channel;
+
+    private List<Frase> _phrases;
+    private (string Value, Embedding<float> Embedding)[] _embeddings;
 
     public SemanticSearch(
         IPhraseProvider phraseProvider,
@@ -21,17 +29,38 @@ public class SemanticSearch : BackgroundService
         _phraseProvider = phraseProvider;
         _embeddingGenerator = embeddingGenerator;
         _logger = logger;
+        _channel = Channel.CreateUnbounded<string>(
+            new UnboundedChannelOptions
+            {
+                SingleWriter = false,
+                SingleReader = false,
+                AllowSynchronousContinuations = true
+            });
     }
+
+    public ChannelWriter<string> SearchChannel => _channel.Writer;
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var phrases = await GetAllPhrases(_phraseProvider);
+        _phrases = await GetAllPhrases(_phraseProvider);
         _logger.LogInformation("Generating embeddings...");
-        var candidateEmbeddings = await _embeddingGenerator.GenerateAndZipAsync(
-            [.. phrases.Select(p => p.Texto)]);
-        Debug.Assert(phrases.Count == candidateEmbeddings.Length,
+        _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
+            [.. _phrases.Select(p => p.Texto)]);
+        Debug.Assert(_phrases.Count == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         _logger.LogInformation("Embeddings generated successfully.");
+        while (true)
+        {
+            while (!stoppingToken.IsCancellationRequested &&
+                await _channel.Reader.WaitToReadAsync(stoppingToken))
+            {
+                if (_channel.Reader.TryRead(out string query)
+                    && !string.IsNullOrWhiteSpace(query))
+                {
+                    await PerformSearch(query);
+                }
+            }
+        }
     }
 
     private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider)
@@ -54,6 +83,41 @@ public class SemanticSearch : BackgroundService
             }
         }
         return phrases;
+    }
+
+    private async Task PerformSearch(string query)
+    {
+        // Generate embedding for the user's input.
+        var userEmbedding = await _embeddingGenerator.GenerateAsync(query);
+
+        // Find the top 10 matches.
+        var matches = _embeddings
+            .Index()
+            .Where(x => x.Item.Value.Length > 0)
+            .Select(x => new
+            {
+                x.Index,
+                //Distance = TensorPrimitives.Distance(
+                //    x.Item.Embedding.Vector.Span,
+                //    userEmbedding.Vector.Span),
+                Similarity = TensorPrimitives.CosineSimilarity(
+                    x.Item.Embedding.Vector.Span,
+                    userEmbedding.Vector.Span)
+            })
+            .OrderByDescending(match => match.Similarity)
+            .Take(50);
+
+        var results = new List<Frase>(50);
+        foreach (var m in matches)
+        {
+            _logger.LogInformation("Similarity: {similarity}", m.Similarity);
+            results.Add(_phrases[m.Index]);
+        }
+
+        // send message
+        WeakReferenceMessenger.Default.Send(
+            new SearchResultMessage(results));
+        _logger.LogInformation("SearchResultMessage sent.");
     }
 
     public override void Dispose()

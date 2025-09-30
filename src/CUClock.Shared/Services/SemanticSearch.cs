@@ -18,7 +18,7 @@ public class SemanticSearch : BackgroundService
     private readonly ILogger<SemanticSearch> _logger;
     private readonly Channel<string> _channel;
 
-    private List<Frase> _phrases;
+    private Frase[] _phrases;
     private (string Value, Embedding<float> Embedding)[] _embeddings;
 
     public SemanticSearch(
@@ -42,11 +42,11 @@ public class SemanticSearch : BackgroundService
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _phrases = await GetAllPhrases(_phraseProvider);
+        _phrases = (await GetAllPhrases(_phraseProvider)).ToArray();
         _logger.LogInformation("Generating embeddings...");
         _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
             [.. _phrases.Select(p => p.Texto)]);
-        Debug.Assert(_phrases.Count == _embeddings.Length,
+        Debug.Assert(_phrases.Length == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         _logger.LogInformation("Embeddings generated successfully.");
         while (true)
@@ -90,7 +90,7 @@ public class SemanticSearch : BackgroundService
         // Generate embedding for the user's input.
         var userEmbedding = await _embeddingGenerator.GenerateAsync(query);
 
-        // Find the top 10 matches.
+        // find matches by similarity
         var matches = _embeddings
             .Index()
             .Where(x => x.Item.Value.Length > 0)

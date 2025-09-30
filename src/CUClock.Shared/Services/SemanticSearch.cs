@@ -29,11 +29,12 @@ public class SemanticSearch : BackgroundService
         _phraseProvider = phraseProvider;
         _embeddingGenerator = embeddingGenerator;
         _logger = logger;
-        _channel = Channel.CreateUnbounded<string>(
-            new UnboundedChannelOptions
+        _channel = Channel.CreateBounded<string>(
+            new BoundedChannelOptions(1)
             {
                 SingleWriter = false,
-                SingleReader = false,
+                SingleReader = true,
+                FullMode = BoundedChannelFullMode.Wait,
                 AllowSynchronousContinuations = true
             });
     }

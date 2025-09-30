@@ -4,25 +4,27 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
-using System.Threading.Channels;
 using SemanticSearchSVC = CUClock.Shared.Services.SemanticSearch;
 
 namespace CUClock.Shared.ViewModels;
 
-public partial class SemanticSearch : BaseViewModel, IRecipient<SearchResultMessage>
+public partial class SemanticSearch : BaseViewModel,
+    IRecipient<SearchResultMessage>
 {
     private readonly ILogger<SemanticSearch> _logger;
     private readonly SemanticSearchSVC _searchService;
 
     public SemanticSearch(
         SemanticSearchSVC searchService,
-        ILogger<SemanticSearch> logger)
-        : base(logger)
+        ILogger<SemanticSearch> logger) : base(logger)
     {
         _searchService = searchService;
         _logger = logger;
-        Search = new RelayCommand<string>(args =>
-            _searchService.SearchChannel.WriteAsync(args));
+        Search = new RelayCommand<string>(async args =>
+        {
+            if (await _searchService.SearchChannel.WaitToWriteAsync())
+                await _searchService.SearchChannel.WriteAsync(args);
+        });
         Clean = new RelayCommand(() => Phrases = []);
         WeakReferenceMessenger.Default.Register(this);
     }
@@ -36,7 +38,7 @@ public partial class SemanticSearch : BaseViewModel, IRecipient<SearchResultMess
 
     public void Receive(SearchResultMessage message)
     {
-        _logger.LogInformation("Found {count} matches.",
+        _logger.LogInformation("{count} matches found.",
             message.Value.Count);
         Phrases = message.Value;
     }

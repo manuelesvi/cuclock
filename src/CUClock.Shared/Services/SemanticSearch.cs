@@ -13,6 +13,7 @@ namespace CUClock.Shared.Services;
 
 public class SemanticSearch : BackgroundService
 {
+    private const byte MatchCount = 50;
     private readonly IPhraseProvider _phraseProvider;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
@@ -43,7 +44,8 @@ public class SemanticSearch : BackgroundService
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _phrases = (await GetAllPhrases(_phraseProvider)).ToArray();
+        _phrases = (await GetAllPhrases(_phraseProvider))
+            .ToArray();
         _logger.LogInformation("Generating embeddings...");
         _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
             [.. _phrases.Select(p => p.Texto)]);
@@ -106,9 +108,9 @@ public class SemanticSearch : BackgroundService
                     userEmbedding.Vector.Span)
             })
             .OrderByDescending(match => match.Similarity)
-            .Take(50);
+            .Take(MatchCount);
 
-        var results = new List<Frase>(50);
+        var results = new List<Frase>(MatchCount);
         foreach (var m in matches)
         {
             _logger.LogInformation("Similarity: {similarity}", m.Similarity);

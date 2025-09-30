@@ -21,33 +21,30 @@
             Stroke="{StaticResource Primary}" StrokeThickness="4"
               Grid.Row="1" HorizontalOptions="Center"/>
         <ScrollView Grid.Row="2">
-            <ListView x:Name="ChaptersList"
-                      ItemsSource="{Binding Items}"
-                      SelectionMode="None">
-                <ListView.ItemTemplate>
+            <CollectionView ItemsSource="{Binding Items}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:ChapterDetail">
-                        <ViewCell>
-                            <StackLayout Orientation="Horizontal" Spacing="5">
-                                <Label Text="{Binding NumeroCapitulo}"
+                        <StackLayout Orientation="Horizontal" Spacing="5">
+                            <Label Text="{Binding NumeroCapitulo}"
                                        IsVisible="{Binding IsChapterNumVisible}"
                                        WidthRequest="40"
                                        HorizontalTextAlignment="End" 
                                        VerticalTextAlignment="Center" />
 
-                                <Label Text="*"
+                            <Label Text="*"
                                        IsVisible="{Binding IsChapterNumVisible, Converter={StaticResource InvertedBoolConverter}}"
                                        WidthRequest="40" HorizontalTextAlignment="End" 
                                        VerticalTextAlignment="Center" />
 
-                                <Switch IsToggled="{Binding IsSelected}" />
+                            <Switch IsToggled="{Binding IsSelected}" />
 
-                                <Label Text="{Binding Nombre}"
+                            <Label Text="{Binding Nombre}"
                                        VerticalTextAlignment="Center" />
-                            </StackLayout>
-                        </ViewCell>
+                        </StackLayout>
                     </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </ScrollView>
     </Grid>
 </ContentPage>

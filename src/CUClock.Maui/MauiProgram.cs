@@ -71,7 +71,7 @@ public static class MauiProgram
                             new Uri("http://127.0.0.1:11434"),
                             defaultModel: "all-minilm");
                 return embeddingGenerator;
-            }, ServiceLifetime.Transient))
+            }))
             .Build();
     }
 

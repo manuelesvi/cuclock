@@ -2,6 +2,7 @@
 using UIKit;
 
 namespace CUClock.Maui;
+
 public class Program
 {
     // This is the main entry point of the application.

@@ -1,6 +1,7 @@
 ﻿using Foundation;
 
 namespace CUClock.Maui;
+
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate
 {

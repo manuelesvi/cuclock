@@ -2,6 +2,7 @@
 using Android.Runtime;
 
 namespace CUClock.Maui;
+
 [Application]
 public class MainApplication : MauiApplication
 {

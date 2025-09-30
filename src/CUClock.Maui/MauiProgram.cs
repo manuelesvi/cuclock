@@ -37,7 +37,7 @@ public static class MauiProgram
         builder.Services
             .AddServices()
             .AddViewModels();
-        
+
         var backHost = CreateBackgroundHost();
         var searchSvc = backHost.Services.GetService<IHostedService>() as SemanticSearch
             ?? throw new NullReferenceException();

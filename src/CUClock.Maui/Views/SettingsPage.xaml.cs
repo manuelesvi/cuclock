@@ -9,8 +9,8 @@ public partial class SettingsPage : ContentPage
 {
     private readonly IFileService _fileService;
     public SettingsPage()
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
         var services = App.Current!.Handler.GetServiceProvider();
         _fileService = services.GetRequiredService<IFileService>();
         var vm = services.GetService<Announcer>();

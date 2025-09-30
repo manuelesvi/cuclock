@@ -117,7 +117,7 @@ public class SemanticSearch : BackgroundService
 
         // send message
         WeakReferenceMessenger.Default.Send(
-            new SearchResultMessage(results));
+            new SearchResultMessage(results.ToArray()));
         _logger.LogInformation("SearchResultMessage sent.");
     }
 

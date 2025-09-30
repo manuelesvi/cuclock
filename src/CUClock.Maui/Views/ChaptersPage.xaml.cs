@@ -6,8 +6,7 @@ public partial class ChaptersPage : ContentPage
 {
     public ChaptersPage()
     {
-        BindingContext = App.Current!.Handler.GetServiceProvider()
-            .GetService<Chapters>(); // Chapters' ViewModel
+        BindingContext = App.Current!.Handler.GetService<Chapters>();
         InitializeComponent();
     }
 }

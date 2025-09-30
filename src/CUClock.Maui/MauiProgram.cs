@@ -50,32 +50,29 @@ public static class MauiProgram
 
     public static IHost CreateBackgroundHost()
     {
-        var hostBuilder = new HostBuilder();
-        hostBuilder.ConfigureServices(services =>
-        {
-            services
-                .AddLogging(configure => configure.AddDebug())
-                .AddTransient<IPhraseProvider, PhraseProvider>(services =>
+        var builder = new HostBuilder();
+        return builder.ConfigureServices(services => services
+            .AddLogging(configure => configure.AddDebug())
+            .AddTransient<IPhraseProvider, PhraseProvider>(services =>
+            {
+                var logger = services.GetService<ILogger<PhraseProvider>>()!;
+                // lambdas call local file system methods to read txt files
+                return new PhraseProvider(logger)
                 {
-                    var logger = services.GetService<ILogger<PhraseProvider>>()!;
-                    // lambdas call local file system methods to read txt files
-                    return new PhraseProvider(logger)
-                    {
-                        FileExists = filePath => FileSystem.AppPackageFileExistsAsync(filePath),
-                        ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
-                    };
-                })
-                .AddEmbeddingGenerator(services =>
-                {
-                    IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator =
-                            new OllamaApiClient(
-                                new Uri("http://127.0.0.1:11434"),
-                                defaultModel: "all-minilm");
-                    return embeddingGenerator;
-                }, ServiceLifetime.Transient);
-            services.AddHostedService<SemanticSearch>();
-        });
-        return hostBuilder.Build();
+                    FileExists = filePath => FileSystem.AppPackageFileExistsAsync(filePath),
+                    ReadFile = filePath => FileSystem.OpenAppPackageFileAsync(filePath)
+                };
+            })
+            .AddHostedService<SemanticSearch>()
+            .AddEmbeddingGenerator(services =>
+            {
+                IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator =
+                        new OllamaApiClient(
+                            new Uri("http://127.0.0.1:11434"),
+                            defaultModel: "all-minilm");
+                return embeddingGenerator;
+            }, ServiceLifetime.Transient))
+            .Build();
     }
 
     private static IServiceCollection AddViewModels(this IServiceCollection services)

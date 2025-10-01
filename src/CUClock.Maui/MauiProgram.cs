@@ -52,7 +52,9 @@ public static class MauiProgram
     {
         var builder = new HostBuilder();
         return builder.ConfigureServices(services => services
+#if DEBUG
             .AddLogging(configure => configure.AddDebug())
+#endif
             .AddTransient<IPhraseProvider, PhraseProvider>(services =>
             {
                 var logger = services.GetService<ILogger<PhraseProvider>>()!;
@@ -67,21 +69,18 @@ public static class MauiProgram
             .AddEmbeddingGenerator(services =>
             {
                 IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator =
-                        new OllamaApiClient(
-                            new Uri("http://127.0.0.1:11434"),
-                            defaultModel: "all-minilm");
+                    new OllamaApiClient(
+                        new Uri("http://127.0.0.1:11434"),
+                        defaultModel: "all-minilm");
                 return embeddingGenerator;
             }))
             .Build();
     }
 
-    private static IServiceCollection AddViewModels(this IServiceCollection services)
-    {
-        services.AddSingleton<AnnouncerVM>();
-        services.AddTransient<Chapters>();
-        services.AddSingleton<SemanticSearchVM>();
-        return services;
-    }
+    private static IServiceCollection AddViewModels(this IServiceCollection services) => services
+        .AddSingleton<AnnouncerVM>()
+        .AddTransient<Chapters>()
+        .AddSingleton<SemanticSearchVM>();
 
     // PhraseProvider factory with file access methods (exists and read)
     private static IServiceCollection AddServices(this IServiceCollection services) => services

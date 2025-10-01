@@ -7,8 +7,6 @@ namespace CUClock.Maui;
 
 public partial class App : Application
 {
-    private CancellationTokenSource _cts = new();
-
     public App()
     {
         InitializeComponent();
@@ -42,7 +40,7 @@ public partial class App : Application
             Height = 500,
             Width = 700
         };
-        BackgroundHost?.RunAsync(_cts.Token);
+        BackgroundHost?.RunAsync();
         return window;
     }
 }

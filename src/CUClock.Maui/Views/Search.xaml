@@ -11,7 +11,7 @@
                Grid.Row="0" />
 
         <ScrollView Grid.Row="1">
-            <CollectionView ItemsSource="{Binding Phrases}"
+            <CollectionView x:Name="PhrasesCollection" ItemsSource="{Binding Phrases}"
                 SelectionChanged="CollectionView_SelectionChanged"
                 SelectionMode="Single" VerticalOptions="Fill">
                 <CollectionView.ItemTemplate>
@@ -31,8 +31,20 @@
         <HorizontalStackLayout HorizontalOptions="End"
                                Spacing="10" Padding="20,10"
                                Grid.Row="2">
+            
             <Button Text="Limpiar" Command="{Binding Clean}" />
-            <Button Text="Buscar" Clicked="Buscar_Clicked"/>
+
+            <Button Text="Hablar"
+                    Command="{Binding SpeakPhrase}"
+                    CommandParameter="{Binding Source={x:Reference PhrasesCollection}, Path=SelectedItem}"
+                    Style="{StaticResource GreenButton}">
+                <Button.ImageSource>
+                    <FontImageSource Glyph="&#xe767;" />
+                </Button.ImageSource>
+            </Button>
+
+            <Button Text="Buscar"
+                    Clicked="Buscar_Clicked"/>
         </HorizontalStackLayout>
     </Grid>
 </ContentPage>

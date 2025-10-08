@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using CUClock.Shared.Contracts.Services;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using SemanticSearchSVC = CUClock.Shared.Services.SemanticSearch;
 
@@ -32,8 +31,9 @@ public partial class SemanticSearch : BaseViewModel,
         });
         SpeakPhrase = new RelayCommand<Frase>((args) =>
         {
-            _logger.LogInformation($"Speaking phrase: {args.Capitulo.NumeroCapitulo}.{args.ID}");
-            announcer.SpeakPhrase(args);
+            _logger.LogInformation(
+                $"Speaking phrase: {args.Capitulo.NumeroCapitulo}.{args.ID}");
+            _announcer.SpeakPhrase(args);
             _logger.LogInformation("Phrase speaked.");
         });
         Clean = new RelayCommand(() => Phrases = []);

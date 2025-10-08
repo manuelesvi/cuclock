@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Animations;
 using System.Diagnostics;
 using System.Numerics.Tensors;
 using System.Threading.Channels;
@@ -44,23 +45,31 @@ public class SemanticSearch : BackgroundService
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // load all phrases
         _phrases = (await GetAllPhrases(_phraseProvider))
             .ToArray();
+
         _logger.LogInformation("Generating embeddings...");
         _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
             [.. _phrases.Select(p => p.Texto)]);
+        
         Debug.Assert(_phrases.Length == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         _logger.LogInformation("Embeddings generated successfully.");
+
+        _logger.BeginScope("Listening for search queries...");
         while (true)
         {
             while (!stoppingToken.IsCancellationRequested &&
                 await _channel.Reader.WaitToReadAsync(stoppingToken))
             {
+                // read from channel the query string
                 if (_channel.Reader.TryRead(out string query)
                     && !string.IsNullOrWhiteSpace(query))
                 {
+                    _logger.LogInformation("Received search query: {query}", query);
                     await PerformSearch(query);
+                    _logger.LogInformation("Search completed.");
                 }
             }
         }

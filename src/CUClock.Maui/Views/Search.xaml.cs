@@ -29,7 +29,8 @@ public partial class Search : ContentPage
         BindingContext.Search.Execute(QueryEntry.Text);
     }
 
-    private void CollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void CollectionView_SelectionChanged(object sender,
+        SelectionChangedEventArgs e)
     {
         var selected = e.CurrentSelection.FirstOrDefault() as Frase;
         if (selected is null)

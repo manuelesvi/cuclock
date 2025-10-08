@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Animations;
 using System.Diagnostics;
 using System.Numerics.Tensors;
 using System.Threading.Channels;
@@ -75,28 +74,6 @@ public class SemanticSearch : BackgroundService
         }
     }
 
-    private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider)
-    {
-        List<Frase> phrases = [];
-        var capitulos = phraseProvider.Chapters;
-        for (int chapter = 1; chapter <= phraseProvider.NumberOfChapters; chapter++)
-        {
-            int numberOfPhrases = phraseProvider.GetNumberOfPhrases(chapter);
-            var capitulo = capitulos.First(c => c.NumeroCapitulo == chapter);
-            for (int phrase = 1; phrase <= numberOfPhrases; phrase++)
-            {
-                var text = await phraseProvider.GetPhrase(chapter, phrase);
-                phrases.Add(new Frase
-                {
-                    Capitulo = capitulo,
-                    ID = phrase,
-                    Texto = text
-                });
-            }
-        }
-        return phrases;
-    }
-
     private async Task PerformSearch(string query)
     {
         // Generate embedding for the user's input.
@@ -130,6 +107,28 @@ public class SemanticSearch : BackgroundService
         WeakReferenceMessenger.Default.Send(
             new SearchResultMessage(results.ToArray()));
         _logger.LogInformation("SearchResultMessage sent.");
+    }
+
+    private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider)
+    {
+        List<Frase> phrases = [];
+        var capitulos = phraseProvider.Chapters;
+        for (int chapter = 1; chapter <= phraseProvider.NumberOfChapters; chapter++)
+        {
+            int numberOfPhrases = phraseProvider.GetNumberOfPhrases(chapter);
+            var capitulo = capitulos.First(c => c.NumeroCapitulo == chapter);
+            for (int phrase = 1; phrase <= numberOfPhrases; phrase++)
+            {
+                var text = await phraseProvider.GetPhrase(chapter, phrase);
+                phrases.Add(new Frase
+                {
+                    Capitulo = capitulo,
+                    ID = phrase,
+                    Texto = text
+                });
+            }
+        }
+        return phrases;
     }
 
     public override void Dispose()

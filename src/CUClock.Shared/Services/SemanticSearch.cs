@@ -83,14 +83,14 @@ public class SemanticSearch : BackgroundService
         var matches = _embeddings
             .Index()
             .Where(x => x.Item.Value.Length > 0)
-            .Select(x => new
+            .Select(embedding => new
             {
-                x.Index,
+                embedding.Index,
                 //Distance = TensorPrimitives.Distance(
                 //    x.Item.Embedding.Vector.Span,
                 //    userEmbedding.Vector.Span),
                 Similarity = TensorPrimitives.CosineSimilarity(
-                    x.Item.Embedding.Vector.Span,
+                    embedding.Item.Embedding.Vector.Span,
                     userEmbedding.Vector.Span)
             })
             .OrderByDescending(match => match.Similarity)

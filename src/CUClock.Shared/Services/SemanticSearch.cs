@@ -44,33 +44,35 @@ public class SemanticSearch : BackgroundService
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // load all phrases
-        _phrases = (await GetAllPhrases(_phraseProvider))
-            .ToArray();
+        _phrases = [.. await GetAllPhrases(_phraseProvider, _logger)];
 
         _logger.LogInformation("Generating embeddings...");
         _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
-            [.. _phrases.Select(p => p.Texto)]);
-        
+            _phrases.Select(p => p.Texto).ToArray());
         Debug.Assert(_phrases.Length == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         _logger.LogInformation("Embeddings generated successfully.");
-
-        _logger.BeginScope("Listening for search queries...");
+        _logger.LogInformation("Listening for search queries...");
         while (true)
         {
             while (!stoppingToken.IsCancellationRequested &&
                 await _channel.Reader.WaitToReadAsync(stoppingToken))
             {
-                // read from channel the query string
-                if (_channel.Reader.TryRead(out string query)
-                    && !string.IsNullOrWhiteSpace(query))
-                {
-                    _logger.LogInformation("Received search query: {query}", query);
-                    await PerformSearch(query);
-                    _logger.LogInformation("Search completed.");
-                }
+                await ReadChannel();
             }
+        }
+    }
+
+    private async Task ReadChannel()
+    {
+        // read from channel the query string
+        if (_channel.Reader.TryRead(out string query)
+            && !string.IsNullOrWhiteSpace(query))
+        {
+            using var scope = _logger.BeginScope("Semantic Search");
+            _logger.LogInformation("Received search query: {query}", query);
+            await PerformSearch(query);
+            _logger.LogInformation("Search completed.");
         }
     }
 
@@ -109,7 +111,8 @@ public class SemanticSearch : BackgroundService
         _logger.LogInformation("SearchResultMessage sent.");
     }
 
-    private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider)
+    private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider,
+        ILogger<SemanticSearch> logger)
     {
         List<Frase> phrases = [];
         var capitulos = phraseProvider.Chapters;
@@ -128,6 +131,7 @@ public class SemanticSearch : BackgroundService
                 });
             }
         }
+        logger.LogInformation("Total phrases loaded: {count}", phrases.Count);
         return phrases;
     }
 

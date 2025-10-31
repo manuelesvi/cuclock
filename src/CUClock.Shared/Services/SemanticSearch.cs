@@ -5,15 +5,20 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics.Tensors;
 using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
+using SemanticSearchResult = (string Value, Embedding<float> Embedding)[];
+
 public class SemanticSearch : BackgroundService
 {
     private const byte MatchCount = 50;
+
+    private readonly IServiceProvider _services;
     private readonly IPhraseProvider _phraseProvider;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
@@ -22,14 +27,12 @@ public class SemanticSearch : BackgroundService
     private Frase[] _phrases;
     private (string Value, Embedding<float> Embedding)[] _embeddings;
 
-    public SemanticSearch(
-        IPhraseProvider phraseProvider,
-        IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-        ILogger<SemanticSearch> logger)
+    public SemanticSearch(IServiceProvider services)
     {
-        _phraseProvider = phraseProvider;
-        _embeddingGenerator = embeddingGenerator;
-        _logger = logger;
+        _services = services;
+        _phraseProvider = services.GetService<IPhraseProvider>();
+        _embeddingGenerator = services.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
+        _logger = services.GetService<ILogger<SemanticSearch>>();
         _channel = Channel.CreateBounded<string>(
             new BoundedChannelOptions(1)
             {
@@ -45,22 +48,96 @@ public class SemanticSearch : BackgroundService
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _phrases = [.. await GetAllPhrases(_phraseProvider, _logger)];
-
-        _logger.LogInformation("Generating embeddings...");
-        _embeddings = await _embeddingGenerator.GenerateAndZipAsync(
-            _phrases.Select(p => p.Texto).ToArray());
-        Debug.Assert(_phrases.Length == _embeddings.Length,
-            "# of embbeddings don't match with # of phrases");
-        _logger.LogInformation("Embeddings generated successfully.");
+        await GenerateEmbeddings();
         _logger.LogInformation("Listening for search queries...");
-        while (true)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            while (!stoppingToken.IsCancellationRequested &&
-                await _channel.Reader.WaitToReadAsync(stoppingToken))
+            while (await _channel.Reader.WaitToReadAsync(stoppingToken))
             {
                 await ReadChannel();
             }
         }
+    }
+
+    private async Task GenerateEmbeddings()
+    {
+        var time = new Stopwatch();
+        time.Start();
+        _logger.LogInformation("Generating embeddings...");
+        var chunkSize = _phrases.Count() / Environment.ProcessorCount;
+        _logger.LogInformation("Parallel.ForEach chunk size: {size} phrases.", chunkSize);
+        var chunks = _phrases.Index()
+            .Select(p => new
+            {
+                p.Index,
+                p.Item.Texto
+            })
+            .Chunk(chunkSize)
+            .Index();
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = Environment.ProcessorCount,
+        };
+        var results = new ConcurrentDictionary<int, SemanticSearchResult>();
+        await Parallel.ForEachAsync(chunks, options,
+            body: async (chunk, token) =>
+            {
+                var generator = _services.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
+                _logger.LogInformation("Processing chunk #{index}. Size = {size}. Thread {threadID}",
+                    chunk.Index, chunk.Item.Length, Thread.CurrentThread.ManagedThreadId);
+                try
+                {
+                    results[chunk.Index] = await generator
+                        .GenerateAndZipAsync(chunk.Item
+                            .Select(x => x.Texto.Length > 256
+                                ? x.Texto[..256] : x.Texto), cancellationToken: token);
+                    _logger.LogInformation("Chunk #{index} processed. Results Count = {count}. Thread {threadID}",
+                        chunk.Index, results.Count, Thread.CurrentThread.ManagedThreadId);
+                }
+                catch
+                {
+                    _logger.LogError("Error generating embeddings for chunk #{index}",
+                        chunk.Index);
+                    foreach (var length in chunk.Item.Index()
+                        //.OrderByDescending(x => x.Item.Texto.Length)
+                        // .Take(3)
+                        .Select(x => new
+                        {
+                            x.Item.Index,
+                            x.Item.Texto.Length,
+                            Phrase = _phrases[x.Item.Index]
+                        }))
+                    {
+                        _logger.LogInformation("  Phrase #{index} Length = {length}. Phrase: {capitulo}.{phrase}",
+                            length.Index, length.Length,
+                            length.Phrase.Capitulo.NumeroCapitulo, length.Phrase.ID);
+                        _logger.LogInformation("  Text = {text}", length.Phrase.Texto);
+                        try
+                        {
+                            var text = _phrases[length.Index].Texto;
+                            var v = await generator.GenerateAsync(text, cancellationToken: token);
+                            Debug.WriteLine("Vector Length: {0}", v.Vector.Length);
+                        }
+                        catch
+                        {
+                            _logger.LogError("  Error generating embedding for phrase #{index}. Text Length {length}",
+                                length.Index, length.Length);
+                            Debugger.Break();
+                        }
+                    }
+                    results[chunk.Index] = [];
+                }
+                generator.Dispose();
+            });
+        _embeddings = [];
+        for (int i = 0; i < chunks.Count(); i++)
+        {
+            _embeddings = [.. _embeddings, .. results[i]];
+        }
+        Debug.Assert(_phrases.Length == _embeddings.Length,
+            "# of embbeddings don't match with # of phrases");
+        time.Stop();
+        _logger.LogInformation("Embeddings generated successfully. Took: {time}", time.Elapsed);
     }
 
     private async Task ReadChannel()

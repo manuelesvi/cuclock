@@ -12,7 +12,7 @@ using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
-using SemanticSearchResult = (string Value, Embedding<float> Embedding)[];
+using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
 public class SemanticSearch : BackgroundService
 {
@@ -25,7 +25,7 @@ public class SemanticSearch : BackgroundService
     private readonly Channel<string> _channel;
 
     private Frase[] _phrases;
-    private (string Value, Embedding<float> Embedding)[] _embeddings;
+    private EmbeddingTuple[] _embeddings;
 
     public SemanticSearch(IServiceProvider services)
     {
@@ -78,7 +78,7 @@ public class SemanticSearch : BackgroundService
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,
         };
-        var results = new ConcurrentDictionary<int, SemanticSearchResult>();
+        var results = new ConcurrentDictionary<int, EmbeddingTuple[]>();
         await Parallel.ForEachAsync(chunks, options,
             body: async (chunk, token) =>
             {

@@ -27,12 +27,15 @@ public class SemanticSearch : BackgroundService
     private Frase[] _phrases;
     private EmbeddingTuple[] _embeddings;
 
-    public SemanticSearch(IServiceProvider services)
+    public SemanticSearch(
+        IPhraseProvider phraseProvider,
+        ILogger<SemanticSearch> logger,
+        IServiceProvider serviceProvider)
     {
-        _services = services;
-        _phraseProvider = services.GetService<IPhraseProvider>();
-        _embeddingGenerator = services.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
-        _logger = services.GetService<ILogger<SemanticSearch>>();
+        _services = serviceProvider;
+        _phraseProvider = phraseProvider;
+        _embeddingGenerator = serviceProvider.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
+        _logger = logger;
         _channel = Channel.CreateBounded<string>(
             new BoundedChannelOptions(1)
             {
@@ -61,8 +64,10 @@ public class SemanticSearch : BackgroundService
 
     private async Task GenerateEmbeddings()
     {
+#if DEBUG
         var time = new Stopwatch();
         time.Start();
+#endif
         _logger.LogInformation("Generating embeddings...");
         var chunkSize = _phrases.Count() / Environment.ProcessorCount;
         _logger.LogInformation("Parallel.ForEach chunk size: {size} phrases.", chunkSize);
@@ -134,10 +139,12 @@ public class SemanticSearch : BackgroundService
         {
             _embeddings = [.. _embeddings, .. results[i]];
         }
+#if DEBUG
         Debug.Assert(_phrases.Length == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         time.Stop();
         _logger.LogInformation("Embeddings generated successfully. Took: {time}", time.Elapsed);
+#endif
     }
 
     private async Task ReadChannel()

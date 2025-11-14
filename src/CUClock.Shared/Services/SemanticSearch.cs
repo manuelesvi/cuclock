@@ -2,6 +2,9 @@
 using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.Messaging;
+using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.IndexManagement;
+using Elastic.Transport;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,15 +17,20 @@ namespace CUClock.Shared.Services;
 
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
+public record ElasticDocument(byte chapter, byte phrase, string semantic_text);
+
 public class SemanticSearch : BackgroundService
 {
     private const byte MatchCount = 50;
+    private const string IndexName = "cuclock";
 
     private readonly IServiceProvider _services;
     private readonly IPhraseProvider _phraseProvider;
     private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
     private readonly Channel<string> _channel;
+    private readonly ElasticsearchClient _elastic;
+    private readonly IndexState _index;
 
     private Frase[] _phrases;
     private EmbeddingTuple[] _embeddings;
@@ -44,6 +52,15 @@ public class SemanticSearch : BackgroundService
                 FullMode = BoundedChannelFullMode.Wait,
                 AllowSynchronousContinuations = true
             });
+
+        var settings = new ElasticsearchClientSettings(new Uri("http://bacanoraX:9200"))
+            // .CertificateFingerprint("<FINGERPRINT>")
+            .Authentication(new ApiKey("U3RYT2c1b0JKeFVDSUQ2ZkE1bWc6RUtPakxYQmFRdkVEb2JWWGJMdWpMUQ=="));
+
+        _elastic = new ElasticsearchClient(settings);
+        _index = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)))
+            .Indices[IndexName];
+        _logger.LogInformation("Index {name} found.", _index.Settings.Index.ProvidedName);
     }
 
     public ChannelWriter<string> SearchChannel => _channel.Writer;
@@ -51,7 +68,8 @@ public class SemanticSearch : BackgroundService
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _phrases = [.. await GetAllPhrases(_phraseProvider, _logger)];
-        await GenerateEmbeddings();
+        await Task.WhenAll(IndexPhrases(),
+            GenerateEmbeddings());
         _logger.LogInformation("Listening for search queries...");
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -60,6 +78,36 @@ public class SemanticSearch : BackgroundService
                 await ReadChannel();
             }
         }
+    }
+
+    private async Task IndexPhrases()
+    {
+        var docs = new ElasticDocument[_phrases.Length];
+        foreach (var phrase in _phrases.Index())
+        {
+            docs[phrase.Index] = ConvertToDoc(phrase.Item);
+        }
+        
+        var bulkResponse = await _elastic.BulkAsync(b => b.Index(IndexName)
+            .CreateMany(docs));
+
+        if (bulkResponse.Errors)
+        {
+            // Handle errors, iterate through bulkResponse.ItemsWithErrors
+            foreach (var itemWithError in bulkResponse.ItemsWithErrors)
+            {
+                _logger.LogInformation("Error indexing document {id}: {reason}",
+                    itemWithError.Id, itemWithError.Error.Reason);
+            }
+        }
+        else
+        {
+            _logger.LogInformation("Bulk insert successful!");
+        }
+
+        ElasticDocument ConvertToDoc(Frase phrase) => new(
+            (byte)phrase.Capitulo.NumeroCapitulo,
+            (byte)phrase.ID, phrase.Texto);
     }
 
     private async Task GenerateEmbeddings()

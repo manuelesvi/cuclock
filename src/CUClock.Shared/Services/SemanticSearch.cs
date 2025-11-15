@@ -17,7 +17,7 @@ namespace CUClock.Shared.Services;
 
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
-public record ElasticDocument(
+public record ElasticPhrase(
     byte Index,
     byte Chapter, byte Phrase, string Text,
     ReadOnlyMemory<float> Embedding);
@@ -67,7 +67,7 @@ public class SemanticSearch : BackgroundService
         {
             var response = _elastic.Indices.Create(IndexName, c => c
                 .Mappings(m => m
-                    .Properties<ElasticDocument>(p => p
+                    .Properties<ElasticPhrase>(p => p
                         .ByteNumber(b => b.Chapter)
                         .ByteNumber(b => b.Phrase)
                         .Text(t => t.Text)
@@ -141,7 +141,7 @@ public class SemanticSearch : BackgroundService
         var sw = new Stopwatch();
         sw.Start();
 #endif
-        var docs = new ElasticDocument[_phrases.Length];
+        var docs = new ElasticPhrase[_phrases.Length];
         foreach (var phrase in _phrases.Index())
         {
             docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
@@ -169,7 +169,7 @@ public class SemanticSearch : BackgroundService
 #endif
         }
 
-        ElasticDocument ConvertToDoc(int index, Frase phrase) => new((byte)index,
+        ElasticPhrase ConvertToDoc(int index, Frase phrase) => new((byte)index,
             (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
             phrase.Texto, _embeddings[index].Embedding.Vector);
     }
@@ -277,7 +277,7 @@ public class SemanticSearch : BackgroundService
         // Generate embedding for the user's input.
         var queryVector = await _embeddingGenerator.GenerateAsync(query);
         // Use it to query ElasticSearch
-        var response = await _elastic.SearchAsync<ElasticDocument>(search => search
+        var response = await _elastic.SearchAsync<ElasticPhrase>(search => search
             .Indices(IndexName)
             .Query(q => q
                 .ScriptScore(ss => ss

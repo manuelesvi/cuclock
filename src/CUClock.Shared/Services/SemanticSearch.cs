@@ -33,7 +33,6 @@ public class SemanticSearch : BackgroundService
     private readonly ILogger<SemanticSearch> _logger;
     private readonly Channel<string> _channel;
     private readonly ElasticsearchClient _elastic;
-    private readonly IndexState _index;
 
     private bool _bulkIngest;
     private Frase[] _phrases;
@@ -79,7 +78,6 @@ public class SemanticSearch : BackgroundService
             if (response.IsValidResponse)
             {
                 _logger.LogInformation("Index created successfully.");
-                _index = FetchIndex();
                 _bulkIngest = true;
             }
             else
@@ -89,10 +87,6 @@ public class SemanticSearch : BackgroundService
                 _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
                 throw ex;
             }
-        }
-        else
-        {
-            _index = i;
         }
 
         (bool Exists, IndexState Index) DoesIndexExist()
@@ -106,12 +100,6 @@ public class SemanticSearch : BackgroundService
                 false => "Index {name} NOT found."
             }, IndexName);
             return result;
-        }
-
-        IndexState FetchIndex()
-        {
-            var response = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)));
-            return response.Indices[IndexName];
         }
     }
 
@@ -146,11 +134,9 @@ public class SemanticSearch : BackgroundService
         {
             docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
         }
-
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
             .CreateMany(docs));
-
         if (bulkResponse.Errors)
         {
             // Handle errors, iterate through bulkResponse.ItemsWithErrors
@@ -168,7 +154,6 @@ public class SemanticSearch : BackgroundService
             _logger.LogInformation("Bulk insert successful!");
 #endif
         }
-
         ElasticPhrase ConvertToDoc(int index, Frase phrase) => new((byte)index,
             (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
             phrase.Texto, _embeddings[index].Embedding.Vector);

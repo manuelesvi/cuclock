@@ -4,20 +4,23 @@ using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.Messaging;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.IndexManagement;
+using Elastic.Clients.Elasticsearch.Mapping;
 using Elastic.Transport;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Numerics.Tensors;
 using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
-public record ElasticDocument(byte chapter, byte phrase, string semantic_text);
+public record ElasticDocument(
+    byte Index,
+    byte Chapter, byte Phrase, string Text,
+    ReadOnlyMemory<float> Embedding);
 
 public class SemanticSearch : BackgroundService
 {
@@ -32,6 +35,7 @@ public class SemanticSearch : BackgroundService
     private readonly ElasticsearchClient _elastic;
     private readonly IndexState _index;
 
+    private bool _bulkIngest;
     private Frase[] _phrases;
     private EmbeddingTuple[] _embeddings;
 
@@ -58,9 +62,57 @@ public class SemanticSearch : BackgroundService
             .Authentication(new ApiKey("U3RYT2c1b0JKeFVDSUQ2ZkE1bWc6RUtPakxYQmFRdkVEb2JWWGJMdWpMUQ=="));
 
         _elastic = new ElasticsearchClient(settings);
-        _index = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)))
-            .Indices[IndexName];
-        _logger.LogInformation("Index {name} found.", _index.Settings.Index.ProvidedName);
+        var (exists, i) = DoesIndexExist();
+        if (!exists)
+        {
+            var response = _elastic.Indices.Create(IndexName, c => c
+                .Mappings(m => m
+                    .Properties<ElasticDocument>(p => p
+                        .ByteNumber(b => b.Chapter)
+                        .ByteNumber(b => b.Phrase)
+                        .Text(t => t.Text)
+                        .DenseVector(v => v.Embedding, p => p
+                            .Dims(384)
+                            .Index(true)
+                            .Similarity(DenseVectorSimilarity.Cosine)))));
+
+            if (response.IsValidResponse)
+            {
+                _logger.LogInformation("Index created successfully.");
+                _index = FetchIndex();
+                _bulkIngest = true;
+            }
+            else
+            {
+                var ex = new ApplicationException(
+                    $"Failed to create ElasticSearch index. Error: {response.DebugInformation}");
+                _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
+                throw ex;
+            }
+        }
+        else
+        {
+            _index = i;
+        }
+
+        (bool Exists, IndexState Index) DoesIndexExist()
+        {
+            var i = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)));
+            bool exists = i.IsValidResponse && (i.Indices?.ContainsKey(IndexName) ?? false);
+            var result = (exists, exists ? i.Indices[IndexName] : null);
+            _logger.LogInformation(result.Item1 switch
+            {
+                true => "Index {name} found.",
+                false => "Index {name} NOT found."
+            }, IndexName);
+            return result;
+        }
+
+        IndexState FetchIndex()
+        {
+            var response = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)));
+            return response.Indices[IndexName];
+        }
     }
 
     public ChannelWriter<string> SearchChannel => _channel.Writer;
@@ -68,8 +120,11 @@ public class SemanticSearch : BackgroundService
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _phrases = [.. await GetAllPhrases(_phraseProvider, _logger)];
-        await Task.WhenAll(IndexPhrases(),
-            GenerateEmbeddings());
+        if (_bulkIngest)
+        {
+            await GenerateEmbeddings();
+            await IndexPhrases();
+        }
         _logger.LogInformation("Listening for search queries...");
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -82,13 +137,18 @@ public class SemanticSearch : BackgroundService
 
     private async Task IndexPhrases()
     {
+#if DEBUG
+        var sw = new Stopwatch();
+        sw.Start();
+#endif
         var docs = new ElasticDocument[_phrases.Length];
         foreach (var phrase in _phrases.Index())
         {
-            docs[phrase.Index] = ConvertToDoc(phrase.Item);
+            docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
         }
-        
-        var bulkResponse = await _elastic.BulkAsync(b => b.Index(IndexName)
+
+        var bulkResponse = await _elastic
+            .BulkAsync(b => b.Index(IndexName)
             .CreateMany(docs));
 
         if (bulkResponse.Errors)
@@ -102,12 +162,16 @@ public class SemanticSearch : BackgroundService
         }
         else
         {
+#if DEBUG
+            _logger.LogInformation("Bulk insert successful! Finished in: {time}", sw.Elapsed);
+#else
             _logger.LogInformation("Bulk insert successful!");
+#endif
         }
 
-        ElasticDocument ConvertToDoc(Frase phrase) => new(
-            (byte)phrase.Capitulo.NumeroCapitulo,
-            (byte)phrase.ID, phrase.Texto);
+        ElasticDocument ConvertToDoc(int index, Frase phrase) => new((byte)index,
+            (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
+            phrase.Texto, _embeddings[index].Embedding.Vector);
     }
 
     private async Task GenerateEmbeddings()
@@ -211,33 +275,30 @@ public class SemanticSearch : BackgroundService
     private async Task PerformSearch(string query)
     {
         // Generate embedding for the user's input.
-        var userEmbedding = await _embeddingGenerator.GenerateAsync(query);
-
-        // find matches by similarity
-        var matches = _embeddings
-            .Index()
-            .Where(x => x.Item.Value.Length > 0)
-            .Select(embedding => new
-            {
-                embedding.Index,
-                //Distance = TensorPrimitives.Distance(
-                //    x.Item.Embedding.Vector.Span,
-                //    userEmbedding.Vector.Span),
-                Similarity = TensorPrimitives.CosineSimilarity(
-                    embedding.Item.Embedding.Vector.Span,
-                    userEmbedding.Vector.Span)
-            })
-            .OrderByDescending(match => match.Similarity)
-            .Take(MatchCount);
+        var queryVector = await _embeddingGenerator.GenerateAsync(query);
+        // Use it to query ElasticSearch
+        var response = await _elastic.SearchAsync<ElasticDocument>(search => search
+            .Indices(IndexName)
+            .Query(q => q
+                .ScriptScore(ss => ss
+                    .Query(qs => qs.Match(m => m
+                        .Field(f => f.Text)
+                        .Query(query)))
+                .Script(sc => sc
+                    .Source("cosineSimilarity(params.queryVector, 'embedding') + 1.0")
+                    .Params(p => p
+                        .Add("queryVector", queryVector.Vector)))))
+            .Size(MatchCount));
 
         var results = new List<Frase>(MatchCount);
-        foreach (var m in matches)
+        foreach (var document in response.Documents)
         {
-            _logger.LogInformation("Similarity: {similarity}", m.Similarity);
-            results.Add(_phrases[m.Index]);
+            _logger.LogInformation("Phrase {chapter}.{phrase}: {text}",
+                document.Chapter, document.Phrase, document.Text);
+            results.Add(_phrases[document.Index]);
         }
 
-        // send message
+        // Send message to upper layer(s)
         WeakReferenceMessenger.Default.Send(
             new SearchResultMessage(results.ToArray()));
         _logger.LogInformation("SearchResultMessage sent.");

@@ -15,10 +15,10 @@ using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
+using TextEmbeddingGenerator = IEmbeddingGenerator<string, Embedding<float>>;
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
-public record ElasticPhrase(
-    byte Index,
+public record ElasticPhrase(byte Index,
     byte Chapter, byte Phrase, string Text,
     ReadOnlyMemory<float> Embedding);
 
@@ -29,7 +29,7 @@ public class SemanticSearch : BackgroundService
 
     private readonly IServiceProvider _services;
     private readonly IPhraseProvider _phraseProvider;
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
+    private readonly TextEmbeddingGenerator _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
     private readonly Channel<string> _channel;
     private readonly ElasticsearchClient _elastic;
@@ -45,7 +45,7 @@ public class SemanticSearch : BackgroundService
     {
         _services = serviceProvider;
         _phraseProvider = phraseProvider;
-        _embeddingGenerator = serviceProvider.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
+        _embeddingGenerator = serviceProvider.GetService<TextEmbeddingGenerator>();
         _logger = logger;
         _channel = Channel.CreateBounded<string>(
             new BoundedChannelOptions(1)
@@ -56,50 +56,48 @@ public class SemanticSearch : BackgroundService
                 AllowSynchronousContinuations = true
             });
 
+        // include certificate fingerprint if needed (https)
         var settings = new ElasticsearchClientSettings(new Uri("http://bacanoraX:9200"))
             // .CertificateFingerprint("<FINGERPRINT>")
             .Authentication(new ApiKey("U3RYT2c1b0JKeFVDSUQ2ZkE1bWc6RUtPakxYQmFRdkVEb2JWWGJMdWpMUQ=="));
-
         _elastic = new ElasticsearchClient(settings);
-        var (exists, i) = DoesIndexExist();
-        if (!exists)
+        if (DoesIndexExist())
         {
-            var response = _elastic.Indices.Create(IndexName, c => c
-                .Mappings(m => m
-                    .Properties<ElasticPhrase>(p => p
-                        .ByteNumber(b => b.Chapter)
-                        .ByteNumber(b => b.Phrase)
-                        .Text(t => t.Text)
-                        .DenseVector(v => v.Embedding, p => p
-                            .Dims(384)
-                            .Index(true)
-                            .Similarity(DenseVectorSimilarity.Cosine)))));
-
-            if (response.IsValidResponse)
-            {
-                _logger.LogInformation("Index created successfully.");
-                _bulkIngest = true;
-            }
-            else
-            {
-                var ex = new ApplicationException(
-                    $"Failed to create ElasticSearch index. Error: {response.DebugInformation}");
-                _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
-                throw ex;
-            }
+            return;
         }
 
-        (bool Exists, IndexState Index) DoesIndexExist()
+        var response = _elastic.Indices.Create(IndexName, c => c
+            .Mappings(m => m
+                .Properties<ElasticPhrase>(p => p
+                    .ByteNumber(b => b.Chapter)
+                    .ByteNumber(b => b.Phrase)
+                    .Text(t => t.Text)
+                    .DenseVector(v => v.Embedding, p => p
+                        .Dims(384)
+                        .Index(true)
+                        .Similarity(DenseVectorSimilarity.Cosine)))));
+
+        if (!response.IsValidResponse)
+        {
+            var ex = new ApplicationException(
+                $"Failed to create ElasticSearch index. Error: {response.DebugInformation}");
+            _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
+            throw ex;
+        }
+
+        _logger.LogInformation("Index created successfully.");
+        _bulkIngest = true;
+
+        bool DoesIndexExist()
         {
             var i = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)));
             bool exists = i.IsValidResponse && (i.Indices?.ContainsKey(IndexName) ?? false);
-            var result = (exists, exists ? i.Indices[IndexName] : null);
-            _logger.LogInformation(result.Item1 switch
+            _logger.LogInformation(exists switch
             {
                 true => "Index {name} found.",
                 false => "Index {name} NOT found."
             }, IndexName);
-            return result;
+            return exists;
         }
     }
 
@@ -134,26 +132,27 @@ public class SemanticSearch : BackgroundService
         {
             docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
         }
+        
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
             .CreateMany(docs));
-        if (bulkResponse.Errors)
-        {
-            // Handle errors, iterate through bulkResponse.ItemsWithErrors
-            foreach (var itemWithError in bulkResponse.ItemsWithErrors)
-            {
-                _logger.LogInformation("Error indexing document {id}: {reason}",
-                    itemWithError.Id, itemWithError.Error.Reason);
-            }
-        }
-        else
+        if (!bulkResponse.Errors)
         {
 #if DEBUG
             _logger.LogInformation("Bulk insert successful! Finished in: {time}", sw.Elapsed);
 #else
             _logger.LogInformation("Bulk insert successful!");
 #endif
+            return;
         }
+
+        // Handle errors, iterate through bulkResponse.ItemsWithErrors
+        foreach (var itemWithError in bulkResponse.ItemsWithErrors)
+        {
+            _logger.LogInformation("Error indexing document {id}: {reason}",
+                itemWithError.Id, itemWithError.Error.Reason);
+        }
+
         ElasticPhrase ConvertToDoc(int index, Frase phrase) => new((byte)index,
             (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
             phrase.Texto, _embeddings[index].Embedding.Vector);
@@ -181,56 +180,57 @@ public class SemanticSearch : BackgroundService
             MaxDegreeOfParallelism = Environment.ProcessorCount,
         };
         var results = new ConcurrentDictionary<int, EmbeddingTuple[]>();
-        await Parallel.ForEachAsync(chunks, options,
-            body: async (chunk, token) =>
+        await Parallel.ForEachAsync(chunks, options, body: async (chunk, token) =>
+        {
+            var generator = _services.GetService<TextEmbeddingGenerator>();
+            _logger.LogInformation(
+                "Processing chunk #{index}. Size = {size}. Thread {threadID}",
+                chunk.Index, chunk.Item.Length, Thread.CurrentThread.ManagedThreadId);
+            try
             {
-                var generator = _services.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
-                _logger.LogInformation("Processing chunk #{index}. Size = {size}. Thread {threadID}",
-                    chunk.Index, chunk.Item.Length, Thread.CurrentThread.ManagedThreadId);
-                try
-                {
-                    results[chunk.Index] = await generator
-                        .GenerateAndZipAsync(chunk.Item
-                            .Select(x => x.Texto.Length > 256
-                                ? x.Texto[..256] : x.Texto), cancellationToken: token);
-                    _logger.LogInformation("Chunk #{index} processed. Results Count = {count}. Thread {threadID}",
-                        chunk.Index, results.Count, Thread.CurrentThread.ManagedThreadId);
-                }
-                catch
-                {
-                    _logger.LogError("Error generating embeddings for chunk #{index}",
-                        chunk.Index);
-                    foreach (var length in chunk.Item.Index()
-                        //.OrderByDescending(x => x.Item.Texto.Length)
-                        // .Take(3)
-                        .Select(x => new
-                        {
-                            x.Item.Index,
-                            x.Item.Texto.Length,
-                            Phrase = _phrases[x.Item.Index]
-                        }))
+                results[chunk.Index] = await generator
+                    .GenerateAndZipAsync(chunk.Item
+                        .Select(x => x.Texto.Length > 256
+                            ? x.Texto[..256] : x.Texto), cancellationToken: token);
+                _logger.LogInformation(
+                    "Chunk #{index} processed. Results Count = {count}. Thread {threadID}",
+                    chunk.Index, results.Count, Thread.CurrentThread.ManagedThreadId);
+            }
+            catch
+            {
+                _logger.LogError("Error generating embeddings for chunk #{index}",
+                    chunk.Index);
+                foreach (var length in chunk.Item.Index()
+                    .Select(x => new
                     {
-                        _logger.LogInformation("  Phrase #{index} Length = {length}. Phrase: {capitulo}.{phrase}",
-                            length.Index, length.Length,
-                            length.Phrase.Capitulo.NumeroCapitulo, length.Phrase.ID);
-                        _logger.LogInformation("  Text = {text}", length.Phrase.Texto);
-                        try
-                        {
-                            var text = _phrases[length.Index].Texto;
-                            var v = await generator.GenerateAsync(text, cancellationToken: token);
-                            Debug.WriteLine("Vector Length: {0}", v.Vector.Length);
-                        }
-                        catch
-                        {
-                            _logger.LogError("  Error generating embedding for phrase #{index}. Text Length {length}",
-                                length.Index, length.Length);
-                            Debugger.Break();
-                        }
+                        x.Item.Index,
+                        x.Item.Texto.Length,
+                        Phrase = _phrases[x.Item.Index]
+                    }))
+                {
+                    _logger.LogInformation(
+                        "  Phrase #{index} Length = {length}. Phrase: {capitulo}.{phrase}",
+                        length.Index, length.Length,
+                        length.Phrase.Capitulo.NumeroCapitulo, length.Phrase.ID);
+                    _logger.LogInformation("  Text = {text}", length.Phrase.Texto);
+                    try
+                    {
+                        var text = _phrases[length.Index].Texto;
+                        var v = await generator.GenerateAsync(text, cancellationToken: token);
+                        Debug.WriteLine("Vector Length: {0}", v.Vector.Length);
                     }
-                    results[chunk.Index] = [];
+                    catch
+                    {
+                        _logger.LogError(
+                            "  Error generating embedding for phrase #{index}. Text Length {length}",
+                            length.Index, length.Length);
+                        Debugger.Break();
+                    }
                 }
-                generator.Dispose();
-            });
+                results[chunk.Index] = [];
+            }
+            generator.Dispose();
+        });
         _embeddings = [];
         for (int i = 0; i < chunks.Count(); i++)
         {
@@ -240,7 +240,8 @@ public class SemanticSearch : BackgroundService
         Debug.Assert(_phrases.Length == _embeddings.Length,
             "# of embbeddings don't match with # of phrases");
         time.Stop();
-        _logger.LogInformation("Embeddings generated successfully. Took: {time}", time.Elapsed);
+        _logger.LogInformation("Embeddings generated successfully. Took: {time}",
+            time.Elapsed);
 #endif
     }
 
@@ -260,22 +261,28 @@ public class SemanticSearch : BackgroundService
     private async Task PerformSearch(string query)
     {
         // Generate embedding for the user's input.
-        var queryVector = await _embeddingGenerator.GenerateAsync(query);
+        var queryEmbedding = await _embeddingGenerator.GenerateAsync(query);
+        var vector = queryEmbedding.Vector;
         // Use it to query ElasticSearch
         var response = await _elastic.SearchAsync<ElasticPhrase>(search => search
             .Indices(IndexName)
-            .Query(q => q
-                .ScriptScore(ss => ss
-                    .Query(qs => qs.Match(m => m
-                        .Field(f => f.Text)
-                        .Query(query)))
+            .Query(q => q.MatchAll())
+            .Query(q => q.ScriptScore(ss => ss
+                .Query(qs => qs.Match(m => m
+                    .Field(f => f.Text)
+                    .Query(query)
+                ))
                 .Script(sc => sc
-                    .Source("cosineSimilarity(params.queryVector, 'embedding') + 1.0")
+                    // Combine text relevance (_score) with vector similarity & adjust the weighting;
+                    // since cosines' range goes between -1 and 1, add 1 to avoid negative scores:
+                    .Source("0.75 * (cosineSimilarity(params.queryVector, 'embedding') + 1) + 0.25 * _score")
                     .Params(p => p
-                        .Add("queryVector", queryVector.Vector)))))
+                        .Add("queryVector", vector)
+                ))
+            ))
             .Size(MatchCount));
 
-        var results = new List<Frase>(MatchCount);
+        var results = new List<Frase>((int)response.Total);
         foreach (var document in response.Documents)
         {
             _logger.LogInformation("Phrase {chapter}.{phrase}: {text}",

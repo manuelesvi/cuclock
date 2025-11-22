@@ -144,16 +144,16 @@ public class SemanticSearch : BackgroundService
     private void CreateIndex()
     {
         var response = _elastic.Indices.Create(IndexName, c => c
-                    .Mappings(m => m
-                        .Properties<ElasticPhrase>(p => p
-                            .IntegerNumber(b => b.Index)
-                            .ByteNumber(b => b.Chapter)
-                            .ByteNumber(b => b.Phrase)
-                            .Text(t => t.Text)
-                            .DenseVector(v => v.Embedding, p => p
-                                .Dims(384)
-                                .Index(true)
-                                .Similarity(DenseVectorSimilarity.Cosine)))));
+        .Mappings(m => m
+            .Properties<ElasticPhrase>(p => p
+                .IntegerNumber(b => b.Index) // 889 phrases, so int is fine
+                .ByteNumber(b => b.Chapter) // 31 chapters, so byte is fine
+                .ByteNumber(b => b.Phrase) // max 255 phrases per chapter, so byte is fine
+                .Text(t => t.Text) // store the phrase for full-text search
+                .DenseVector(v => v.Embedding, p => p // 384-dimensional embedding vector (all-MiniLM)
+                    .Dims(384)
+                    .Index(true)
+                    .Similarity(DenseVectorSimilarity.Cosine)))));
 
         if (!response.IsValidResponse)
         {

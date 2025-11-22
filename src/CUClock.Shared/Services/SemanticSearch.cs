@@ -146,6 +146,7 @@ public class SemanticSearch : BackgroundService
         var response = _elastic.Indices.Create(IndexName, c => c
                     .Mappings(m => m
                         .Properties<ElasticPhrase>(p => p
+                            .IntegerNumber(b => b.Index)
                             .ByteNumber(b => b.Chapter)
                             .ByteNumber(b => b.Phrase)
                             .Text(t => t.Text)
@@ -172,7 +173,7 @@ public class SemanticSearch : BackgroundService
         var sw = new Stopwatch();
         sw.Start();
 #endif
-        var documents = GetPhrases().ToArray();
+        var documents = GetDocuments().ToArray();
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
             .CreateMany(documents));
@@ -194,7 +195,7 @@ public class SemanticSearch : BackgroundService
         }
         
         // Local functions
-        IEnumerable<ElasticPhrase> GetPhrases() => _phrases
+        IEnumerable<ElasticPhrase> GetDocuments() => _phrases
             .Index()
             .Select(p =>
                 ConvertToDoc(p.Index, p.Item));

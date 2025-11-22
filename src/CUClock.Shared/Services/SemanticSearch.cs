@@ -18,26 +18,63 @@ namespace CUClock.Shared.Services;
 using TextEmbeddingGenerator = IEmbeddingGenerator<string, Embedding<float>>;
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
+/// <summary>
+/// Elastic Search document representing a phrase with its embedding.
+/// </summary>
+/// <param name="Index">
+/// Zero-based index of the phrase in the <see cref="SemanticSearch._phrases"/> arrat.
+/// </param>
+/// <param name="Chapter">
+/// Chapter number of the phrase.
+/// </param>
+/// <param name="Phrase">
+/// Phrase number within the chapter.
+/// </param>
+/// <param name="Text">
+/// Text of the phrase.
+/// </param>
+/// <param name="Embedding">
+/// A 384-dimensional dense vector representation of the phrase text.
+/// </param>
 public record ElasticPhrase(int Index,
-    byte Chapter, byte Phrase, string Text,
-    ReadOnlyMemory<float> Embedding);
+    byte Chapter,
+    byte Phrase,
+    string Text,
+    ReadOnlyMemory<float> Embedding
+);
 
 public class SemanticSearch : BackgroundService
 {
+    /// <summary>
+    /// Number of results to return for ElasticSearch queries.
+    /// </summary>
     private const byte MatchCount = 50;
+
+    /// <summary>
+    /// Name of the ElasticSearch index to use for storing phrases and their embeddings.
+    /// </summary>
     private const string IndexName = "cuclock";
 
+    // dependencies
     private readonly IServiceProvider _services;
     private readonly IPhraseProvider _phraseProvider;
     private readonly TextEmbeddingGenerator _embeddingGenerator;
     private readonly ILogger<SemanticSearch> _logger;
-    private readonly Channel<string> _channel;
     private readonly ElasticsearchClient _elastic;
 
+    private readonly Channel<string> _channel;
+
+    // local members
     private bool _bulkIngest;
     private Frase[] _phrases;
     private EmbeddingTuple[] _embeddings;
 
+    /// <summary>
+    /// Default constructor for a Semantic Search Service.
+    /// </summary>
+    /// <param name="phraseProvider"></param>
+    /// <param name="logger"></param>
+    /// <param name="serviceProvider"></param>
     public SemanticSearch(
         IPhraseProvider phraseProvider,
         ILogger<SemanticSearch> logger,
@@ -47,6 +84,7 @@ public class SemanticSearch : BackgroundService
         _phraseProvider = phraseProvider;
         _embeddingGenerator = serviceProvider.GetService<TextEmbeddingGenerator>();
         _logger = logger;
+        // create bounded channel to read search queries
         _channel = Channel.CreateBounded<string>(
             new BoundedChannelOptions(1)
             {
@@ -56,8 +94,9 @@ public class SemanticSearch : BackgroundService
                 AllowSynchronousContinuations = true
             });
 
-        // include certificate fingerprint if needed (https)
+        // TODO: move to Program.cs to register as a dependency in ServiceCollection and inject it in constructor
         var settings = new ElasticsearchClientSettings(new Uri("http://bacanoraX:9200"))
+            // NOTE: include certificate fingerprint if needed (https)
             // .CertificateFingerprint("<FINGERPRINT>")
             .Authentication(new ApiKey("U3RYT2c1b0JKeFVDSUQ2ZkE1bWc6RUtPakxYQmFRdkVEb2JWWGJMdWpMUQ=="));
         _elastic = new ElasticsearchClient(settings);
@@ -133,15 +172,10 @@ public class SemanticSearch : BackgroundService
         var sw = new Stopwatch();
         sw.Start();
 #endif
-        var docs = new ElasticPhrase[_phrases.Length];
-        foreach (var phrase in _phrases.Index())
-        {
-            docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
-        }
-
+        var documents = GetPhrases().ToArray();
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
-            .CreateMany(docs));
+            .CreateMany(documents));
         if (!bulkResponse.Errors)
         {
 #if DEBUG
@@ -158,6 +192,12 @@ public class SemanticSearch : BackgroundService
             _logger.LogInformation("Error indexing document {id}: {reason}",
                 itemWithError.Id, itemWithError.Error.Reason);
         }
+        
+        // Local functions
+        IEnumerable<ElasticPhrase> GetPhrases() => _phrases
+            .Index()
+            .Select(p =>
+                ConvertToDoc(p.Index, p.Item));
 
         ElasticPhrase ConvertToDoc(int index, Frase phrase) => new(index,
             (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
@@ -294,12 +334,7 @@ public class SemanticSearch : BackgroundService
             _logger.LogInformation("Phrase {chapter}.{phrase}: {text}",
                 phrase.Chapter, phrase.Phrase, phrase.Text);
             results[document.Index] = _phrases[phrase.Index];
-            // results.Add(GetPhrase(document.Chapter, document.Phrase));
         }
-
-        //Frase GetPhrase(int chapter, int phrase) => _phrases
-        //    .Where(p => p.Capitulo?.NumeroCapitulo == chapter && p.ID == phrase)
-        //    .FirstOrDefault();
 
         // Send message to upper layer(s)
         WeakReferenceMessenger.Default.Send(

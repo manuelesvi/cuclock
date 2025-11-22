@@ -18,7 +18,7 @@ namespace CUClock.Shared.Services;
 using TextEmbeddingGenerator = IEmbeddingGenerator<string, Embedding<float>>;
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
 
-public record ElasticPhrase(byte Index,
+public record ElasticPhrase(int Index,
     byte Chapter, byte Phrase, string Text,
     ReadOnlyMemory<float> Embedding);
 
@@ -61,34 +61,17 @@ public class SemanticSearch : BackgroundService
             // .CertificateFingerprint("<FINGERPRINT>")
             .Authentication(new ApiKey("U3RYT2c1b0JKeFVDSUQ2ZkE1bWc6RUtPakxYQmFRdkVEb2JWWGJMdWpMUQ=="));
         _elastic = new ElasticsearchClient(settings);
-        if (DoesIndexExist())
+        if (!IndexExists)
         {
-            return;
+            CreateIndex();
         }
+    }
 
-        var response = _elastic.Indices.Create(IndexName, c => c
-            .Mappings(m => m
-                .Properties<ElasticPhrase>(p => p
-                    .ByteNumber(b => b.Chapter)
-                    .ByteNumber(b => b.Phrase)
-                    .Text(t => t.Text)
-                    .DenseVector(v => v.Embedding, p => p
-                        .Dims(384)
-                        .Index(true)
-                        .Similarity(DenseVectorSimilarity.Cosine)))));
+    public ChannelWriter<string> SearchChannel => _channel.Writer;
 
-        if (!response.IsValidResponse)
-        {
-            var ex = new ApplicationException(
-                $"Failed to create ElasticSearch index. Error: {response.DebugInformation}");
-            _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
-            throw ex;
-        }
-
-        _logger.LogInformation("Index created successfully.");
-        _bulkIngest = true;
-
-        bool DoesIndexExist()
+    private bool IndexExists
+    {
+        get
         {
             var i = _elastic.Indices.Get(new GetIndexRequest(Indices.Index(IndexName)));
             bool exists = i.IsValidResponse && (i.Indices?.ContainsKey(IndexName) ?? false);
@@ -100,8 +83,6 @@ public class SemanticSearch : BackgroundService
             return exists;
         }
     }
-
-    public ChannelWriter<string> SearchChannel => _channel.Writer;
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -121,6 +102,31 @@ public class SemanticSearch : BackgroundService
         }
     }
 
+    private void CreateIndex()
+    {
+        var response = _elastic.Indices.Create(IndexName, c => c
+                    .Mappings(m => m
+                        .Properties<ElasticPhrase>(p => p
+                            .ByteNumber(b => b.Chapter)
+                            .ByteNumber(b => b.Phrase)
+                            .Text(t => t.Text)
+                            .DenseVector(v => v.Embedding, p => p
+                                .Dims(384)
+                                .Index(true)
+                                .Similarity(DenseVectorSimilarity.Cosine)))));
+
+        if (!response.IsValidResponse)
+        {
+            var ex = new ApplicationException(
+                $"Failed to create ElasticSearch index. Error: {response.DebugInformation}");
+            _logger.LogError(ex, "Failed to create index: {error}", response.DebugInformation);
+            throw ex;
+        }
+
+        _logger.LogInformation("Index created successfully.");
+        _bulkIngest = true;
+    }
+
     private async Task IndexPhrases()
     {
 #if DEBUG
@@ -132,7 +138,7 @@ public class SemanticSearch : BackgroundService
         {
             docs[phrase.Index] = ConvertToDoc(phrase.Index, phrase.Item);
         }
-        
+
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
             .CreateMany(docs));
@@ -153,7 +159,7 @@ public class SemanticSearch : BackgroundService
                 itemWithError.Id, itemWithError.Error.Reason);
         }
 
-        ElasticPhrase ConvertToDoc(int index, Frase phrase) => new((byte)index,
+        ElasticPhrase ConvertToDoc(int index, Frase phrase) => new(index,
             (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
             phrase.Texto, _embeddings[index].Embedding.Vector);
     }
@@ -266,7 +272,6 @@ public class SemanticSearch : BackgroundService
         // Use it to query ElasticSearch
         var response = await _elastic.SearchAsync<ElasticPhrase>(search => search
             .Indices(IndexName)
-            .Query(q => q.MatchAll())
             .Query(q => q.ScriptScore(ss => ss
                 .Query(qs => qs.Match(m => m
                     .Field(f => f.Text)
@@ -274,7 +279,7 @@ public class SemanticSearch : BackgroundService
                 ))
                 .Script(sc => sc
                     // Combine text relevance (_score) with vector similarity & adjust the weighting;
-                    // since cosines' range goes between -1 and 1, add 1 to avoid negative scores:
+                    // cosines' range goes between -1 and 1, add 1 to avoid NEGATIVE scores:
                     .Source("0.75 * (cosineSimilarity(params.queryVector, 'embedding') + 1) + 0.25 * _score")
                     .Params(p => p
                         .Add("queryVector", vector)
@@ -282,13 +287,19 @@ public class SemanticSearch : BackgroundService
             ))
             .Size(MatchCount));
 
-        var results = new List<Frase>((int)response.Total);
-        foreach (var document in response.Documents)
+        var results = new Frase[((int)response.Total)];
+        foreach (var document in response.Documents.Index())
         {
+            var phrase = document.Item;
             _logger.LogInformation("Phrase {chapter}.{phrase}: {text}",
-                document.Chapter, document.Phrase, document.Text);
-            results.Add(_phrases[document.Index]);
+                phrase.Chapter, phrase.Phrase, phrase.Text);
+            results[document.Index] = _phrases[phrase.Index];
+            // results.Add(GetPhrase(document.Chapter, document.Phrase));
         }
+
+        //Frase GetPhrase(int chapter, int phrase) => _phrases
+        //    .Where(p => p.Capitulo?.NumeroCapitulo == chapter && p.ID == phrase)
+        //    .FirstOrDefault();
 
         // Send message to upper layer(s)
         WeakReferenceMessenger.Default.Send(

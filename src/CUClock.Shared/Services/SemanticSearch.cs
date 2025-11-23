@@ -298,19 +298,38 @@ public class SemanticSearch : BackgroundService
         if (_channel.Reader.TryRead(out string query)
             && !string.IsNullOrWhiteSpace(query))
         {
-            using var scope = _logger.BeginScope("Semantic Search");
-            _logger.LogInformation("Received search query: {query}", query);
-            await PerformSearch(query);
+            using var scope = _logger.BeginScope("Semantic Search Query received.");
+            _logger.LogInformation("Query: '{query}'.", query);
+            var msg = await PerformSearch(query);
             _logger.LogInformation("Search completed.");
+
+            var results = msg.Value.ToArray();
+            _logger.LogInformation  ("Found {count} results.", results.Length);
         }
     }
 
-    private async Task PerformSearch(string query)
+    /// <summary>
+    /// Performs a search using the specified query string in <paramref name="query"/>,
+    /// combining semantic and full-text relevance to retrieve matching phrases.
+    /// </summary>
+    /// <remarks>
+    /// This method uses both semantic vector similarity and full-text matching to rank results,
+    /// with a weighted combination favoring semantic relevance.
+    /// Upon completion, the search results are sent to higher-level
+    /// components via a <see cref="SearchResultMessage"/>.
+    /// </remarks>
+    /// <param name="query">The search query string used to find relevant phrases. Cannot be null or empty.</param>
+    /// <returns>A task that represents the asynchronous search operation.</returns>
+    private async Task<SearchResultMessage> PerformSearch(string query)
     {
-        // Generate embedding for the user's input.
+        // generate embedding for input query
         var queryEmbedding = await _embeddingGenerator.GenerateAsync(query);
-        var vector = queryEmbedding.Vector;
-        // Use it to query ElasticSearch
+        var queryVector = queryEmbedding.Vector;
+#if DEBUG
+        var timer = new Stopwatch();
+        timer.Start();
+#endif
+        // 75% semantic search, 25% full-text search
         var response = await _elastic.SearchAsync<ElasticPhrase>(search => search
             .Indices(IndexName)
             .Query(q => q.ScriptScore(ss => ss
@@ -321,13 +340,20 @@ public class SemanticSearch : BackgroundService
                 .Script(sc => sc
                     // Combine text relevance (_score) with vector similarity & adjust the weighting;
                     // cosines' range goes between -1 and 1, add 1 to avoid NEGATIVE scores:
-                    .Source("0.75 * (cosineSimilarity(params.queryVector, 'embedding') + 1) + 0.25 * _score")
+                    .Source(
+                    "0.75 * (cosineSimilarity(params.query, 'embedding') + 1) + 0.25 * _score")                    
                     .Params(p => p
-                        .Add("queryVector", vector)
+                        .Add("query", queryVector)
                 ))
             ))
             .Size(MatchCount));
-
+#if DEBUG
+        timer.Stop();
+        _logger.LogInformation("Search query executed in: {time}.",
+            timer.Elapsed);
+#endif
+        _logger.LogInformation("ElasticSearch returned {total} results.",
+            response.Total);
         var results = new Frase[((int)response.Total)];
         foreach (var document in response.Documents.Index())
         {
@@ -337,10 +363,11 @@ public class SemanticSearch : BackgroundService
             results[document.Index] = _phrases[phrase.Index];
         }
 
+        var msg = new SearchResultMessage(results);
         // Send message to upper layer(s)
-        WeakReferenceMessenger.Default.Send(
-            new SearchResultMessage(results.ToArray()));
+        WeakReferenceMessenger.Default.Send(msg);
         _logger.LogInformation("SearchResultMessage sent.");
+        return msg;
     }
 
     private static async Task<List<Frase>> GetAllPhrases(IPhraseProvider phraseProvider,

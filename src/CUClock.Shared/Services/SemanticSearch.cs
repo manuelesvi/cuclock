@@ -1,7 +1,7 @@
 ﻿using Aphorismus.Shared.Entities;
-using Aphorismus.Shared.Messages;
 using Aphorismus.Shared.Services;
 using CommunityToolkit.Mvvm.Messaging;
+using CUClock.Shared.Messages;
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.IndexManagement;
 using Elastic.Clients.Elasticsearch.Mapping;
@@ -15,8 +15,8 @@ using System.Threading.Channels;
 
 namespace CUClock.Shared.Services;
 
-using TextEmbeddingGenerator = IEmbeddingGenerator<string, Embedding<float>>;
 using EmbeddingTuple = (string Value, Embedding<float> Embedding);
+using TextEmbeddingGenerator = IEmbeddingGenerator<string, Embedding<float>>;
 
 /// <summary>
 /// Elastic Search document representing a phrase with its embedding.

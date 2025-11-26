@@ -173,7 +173,7 @@ public class SemanticSearch : BackgroundService
         var sw = new Stopwatch();
         sw.Start();
 #endif
-        var documents = GetDocuments().ToArray();
+        var documents = GetDocuments();
         var bulkResponse = await _elastic
             .BulkAsync(b => b.Index(IndexName)
             .CreateMany(documents));
@@ -201,8 +201,10 @@ public class SemanticSearch : BackgroundService
                 ConvertToDoc(p.Index, p.Item));
 
         ElasticPhrase ConvertToDoc(int index, Frase phrase) => new(index,
-            (byte)phrase.Capitulo.NumeroCapitulo, (byte)phrase.ID,
-            phrase.Texto, _embeddings[index].Embedding.Vector);
+            Chapter: (byte)phrase.Capitulo.NumeroCapitulo,
+            Phrase: (byte)phrase.ID,
+            Text: phrase.Texto,
+            _embeddings[index].Embedding.Vector);
     }
 
     private async Task GenerateEmbeddings()
